@@ -22,7 +22,6 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 #include "mpfr-test.h"
 
-
 static void
 test_urandomb (long nbtests, mpfr_prec_t prec, int verbose)
 {
@@ -176,9 +175,46 @@ main (int argc, char *argv[])
     }
 
 #ifndef MPFR_USE_MINI_GMP
-  /* since this test assumes a deterministic random generator, and this is not
-     implemented in mini-gmp, we omit it with mini-gmp */
+
+  /* Since these tests assume a deterministic random generator, and this
+     is not implemented in mini-gmp, we omit them with mini-gmp. */
+
   bug20100914 ();
+
+#if __MPFR_GMP(4,2,0)
+  /* Get a non-zero fixed-point number whose first 32 bits are 0 with the
+     default GMP PRNG. This corresponds to the case cnt == 0 && k != 0 in
+     src/urandomb.c (fixed in r8762) with the 32-bit ABI. */
+  {
+    gmp_randstate_t s;
+    mpfr_t x;
+    char *str = "0.1010111100000000000000000000000000000000E-32";
+    int k;
+
+    gmp_randinit_default (s);
+    gmp_randseed_ui (s, 4518);
+    mpfr_init2 (x, 40);
+
+    for (k = 0; k < 575123; k++)
+      {
+        mpfr_urandomb (x, s);
+        MPFR_ASSERTN (MPFR_IS_FP (x));
+      }
+
+    if (mpfr_cmp_str (x, str, 2, MPFR_RNDN) != 0)
+      {
+        printf ("Error in test_urandomb:\n");
+        printf ("Expected %s\n", str);
+        printf ("Got      ");
+        mpfr_dump (x);
+        exit (1);
+      }
+
+    mpfr_clear (x);
+    gmp_randclear (s);
+  }
+#endif
+
 #endif
 
   tests_end_mpfr ();
