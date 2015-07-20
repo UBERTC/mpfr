@@ -147,9 +147,9 @@ static void check1 (void)
     {
       /* Test the exponents up to 3 and with the maximum exponent
          (to check potential intermediate overflow). */
-      if (mpfr_get_exp (x) == 4)
+      if (MPFR_GET_EXP (x) == 4)
         mpfr_set_exp (x, MPFR_EMAX_MAX);
-      e = mpfr_get_exp (x);
+      e = MPFR_GET_EXP (x);
       for (neg = 0; neg < 2; neg++)
         {
           RND_LOOP (r)
@@ -162,6 +162,8 @@ static void check1 (void)
                 {
                   if (red)
                     {
+                      /* e1: exponent of the rounded value of x. */
+                      MPFR_ASSERTN (e1 == e || e1 == e + 1);
                       set_emin (e);
                       set_emax (e);
                       mpfr_clear_flags ();
@@ -173,7 +175,7 @@ static void check1 (void)
                   else
                     {
                       inex1 = mpfr_set (y1, x, (mpfr_rnd_t) r);
-                      e1 = mpfr_get_exp (y1);
+                      e1 = MPFR_IS_INF (y1) ? e + 1 : MPFR_GET_EXP (y1);
                       flags1 = inex1 != 0 ? MPFR_FLAGS_INEXACT : 0;
                     }
                   mpfr_clear_flags ();
@@ -182,21 +184,13 @@ static void check1 (void)
                   set_emin (MPFR_EMIN_MIN);
                   set_emax (MPFR_EMAX_MAX);
                   if ((!red || e == 0) &&
-                      (! mpfr_regular_p (y2) || mpfr_get_exp (y2) != 0))
+                      (! mpfr_regular_p (y2) || MPFR_GET_EXP (y2) != 0))
                     {
                       printf ("Error in check1 for %s, red = %d, x = ",
                               mpfr_print_rnd_mode ((mpfr_rnd_t) r), red);
                       mpfr_dump (x);
                       printf ("Expected 1/2 <= |y| < 1, got y = ");
                       mpfr_dump (y2);
-                      exit (1);
-                    }
-                  if (! SAME_SIGN (inex1, inex2))
-                    {
-                      printf ("Error in check1 for %s, red = %d, x = ",
-                              mpfr_print_rnd_mode ((mpfr_rnd_t) r), red);
-                      mpfr_dump (x);
-                      printf ("Expected inex ~= %d, got %d\n", inex1, inex2);
                       exit (1);
                     }
                   if (!red)
@@ -206,7 +200,9 @@ static void check1 (void)
                       else if (e2 < 0)
                         mpfr_div_2ui (y2, y2, -e2, MPFR_RNDN);
                     }
-                  if (! mpfr_equal_p (y1, y2))
+                  if (! (SAME_SIGN (inex1, inex2) &&
+                         mpfr_equal_p (y1, y2) &&
+                         flags1 == flags2))
                     {
                       printf ("Error in check1 for %s, red = %d, x = ",
                               mpfr_print_rnd_mode ((mpfr_rnd_t) r), red);
@@ -215,13 +211,7 @@ static void check1 (void)
                       mpfr_dump (y1);
                       printf ("Got      y2 = ");
                       mpfr_dump (y2);
-                      exit (1);
-                    }
-                  if (flags1 != flags2)
-                    {
-                      printf ("Error in check1 for %s, red = %d, x = ",
-                              mpfr_print_rnd_mode ((mpfr_rnd_t) r), red);
-                      mpfr_dump (x);
+                      printf ("Expected inex ~= %d, got %d\n", inex1, inex2);
                       printf ("Expected flags:");
                       flags_out (flags1);
                       printf ("Got flags:     ");
