@@ -2592,7 +2592,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-am__api_version='1.15'
+am__api_version='1.14'
 
 ac_aux_dir=
 for ac_dir in "$srcdir" "$srcdir/.." "$srcdir/../.."; do
@@ -2793,8 +2793,8 @@ test "$program_suffix" != NONE &&
 ac_script='s/[\\$]/&&/g;s/;s,x,x,$//'
 program_transform_name=`$as_echo "$program_transform_name" | sed "$ac_script"`
 
-# Expand $ac_aux_dir to an absolute path.
-am_aux_dir=`cd "$ac_aux_dir" && pwd`
+# expand $ac_aux_dir to an absolute path
+am_aux_dir=`cd $ac_aux_dir && pwd`
 
 if test x"${MISSING+set}" != xset; then
   case $am_aux_dir in
@@ -2813,7 +2813,7 @@ else
 $as_echo "$as_me: WARNING: 'missing' script is too old or missing" >&2;}
 fi
 
-if test x"${install_sh+set}" != xset; then
+if test x"${install_sh}" != xset; then
   case $am_aux_dir in
   *\ * | *\	*)
     install_sh="\${SHELL} '$am_aux_dir/install-sh'" ;;
@@ -3132,8 +3132,8 @@ MAKEINFO=${MAKEINFO-"${am_missing_run}makeinfo"}
 # <http://lists.gnu.org/archive/html/automake/2012-07/msg00014.html>
 mkdir_p='$(MKDIR_P)'
 
-# We need awk for the "check" target (and possibly the TAP driver).  The
-# system "awk" is bad on some platforms.
+# We need awk for the "check" target.  The system "awk" is bad on
+# some platforms.
 # Always define AMTAR for backward compatibility.  Yes, it's still used
 # in the wild :-(  We should find a proper way to deprecate it ...
 AMTAR='$${TAR-tar}'
@@ -3190,7 +3190,6 @@ END
     as_fn_error $? "Your 'rm' program is bad, sorry." "$LINENO" 5
   fi
 fi
-
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable maintainer-specific portions of Makefiles" >&5
 $as_echo_n "checking whether to enable maintainer-specific portions of Makefiles... " >&6; }
@@ -6780,6 +6779,62 @@ $as_echo "$mpfr_cv_have_intmax_max" >&6; }
   if test "$mpfr_cv_have_intmax_max" = "yes"; then
 
 $as_echo "#define MPFR_HAVE_INTMAX_MAX 1" >>confdefs.h
+
+  fi
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for working printf length modifier for intmax_t" >&5
+$as_echo_n "checking for working printf length modifier for intmax_t... " >&6; }
+if ${mpfr_cv_printf_maxlm+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+    saved_CPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS -I$srcdir/src"
+    for modifier in j ll l
+    do
+      if test "$cross_compiling" = yes; then :
+         mpfr_cv_printf_maxlm=j; break
+
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <stdio.h>
+#include <string.h>
+#include "mpfr-intmax.h"
+
+int
+main ()
+{
+
+  char s[64];
+  sprintf (s, "%${modifier}d %${modifier}u",
+           (intmax_t) -17, (uintmax_t) 42);
+  return strcmp (s, "-17 42") != 0;
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  mpfr_cv_printf_maxlm=${modifier}; break
+else
+  mpfr_cv_printf_maxlm=none
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+    done
+    CPPFLAGS="$saved_CPPFLAGS"
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $mpfr_cv_printf_maxlm" >&5
+$as_echo "$mpfr_cv_printf_maxlm" >&6; }
+  if test "$mpfr_cv_printf_maxlm" != "none"; then
+
+cat >>confdefs.h <<_ACEOF
+#define MPFR_PRINTF_MAXLM "$mpfr_cv_printf_maxlm"
+_ACEOF
 
   fi
 fi
@@ -15537,6 +15592,35 @@ $as_echo "no" >&6; }
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking usable gmp.h at link time" >&5
+$as_echo_n "checking usable gmp.h at link time... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include "gmp.h"
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+
+ { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+ as_fn_error $? "There is an incompatibility between gmp.h and the compiler.
+See 'config.log' for details." "$LINENO" 5
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
 if test "$use_gmp_build" = yes ; then
    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gmp internal files" >&5
 $as_echo_n "checking for gmp internal files... " >&6; }
@@ -16129,13 +16213,12 @@ fi
 
 LD_RUN_PATH="$saved_LD_RUN_PATH"
 
-for ac_func in __gmpn_rootrem __gmpn_sbpi1_divappr_q
+for ac_func in __gmpn_sbpi1_divappr_q
 do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  ac_fn_c_check_func "$LINENO" "__gmpn_sbpi1_divappr_q" "ac_cv_func___gmpn_sbpi1_divappr_q"
+if test "x$ac_cv_func___gmpn_sbpi1_divappr_q" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+#define HAVE___GMPN_SBPI1_DIVAPPR_Q 1
 _ACEOF
 
 fi
