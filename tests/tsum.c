@@ -21,20 +21,18 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-test.h"
-#include <sys/types.h>
-#include <sys/resource.h>
 
 #ifndef MPFR_NCANCEL
 #define MPFR_NCANCEL 10
 #endif
 
-static int
-cputime ()
-{
-  struct rusage rus;
+#include <time.h>
 
-  getrusage (0, &rus);
-  return rus.ru_utime.tv_sec * 1000 + rus.ru_utime.tv_usec / 1000;
+/* return the cpu time in milliseconds */
+static int
+cputime (void)
+{
+  return clock () / (CLOCKS_PER_SEC / 1000);
 }
 
 static mpfr_prec_t
@@ -1134,8 +1132,8 @@ check_random (int n, int k, mpfr_prec_t prec, mpfr_rnd_t rnd)
   gmp_randinit_default (state);
   mpfr_init2 (s, prec);
   mpfr_init2 (ref_s, prec);
-  x = malloc (n * sizeof (mpfr_t));
-  y = malloc (n * sizeof (mpfr_ptr));
+  x = (mpfr_t *) malloc (n * sizeof (mpfr_t));
+  y = (mpfr_ptr *) malloc (n * sizeof (mpfr_ptr));
   for (i = 0; i < n; i++)
     {
       y[i] = x[i];
@@ -1174,7 +1172,7 @@ main (int argc, char *argv[])
   if (argc == 5)
     {
       check_random (atoi (argv[1]), atoi (argv[2]), atoi (argv[3]),
-                    atoi (argv[4]));
+                    (mpfr_rnd_t) atoi (argv[4]));
       return 0;
     }
 
