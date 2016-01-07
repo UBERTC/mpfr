@@ -1,6 +1,6 @@
 /* Test compatibility mpf-mpfr.
 
-Copyright 2003-2015 Free Software Foundation, Inc.
+Copyright 2003-2016 Free Software Foundation, Inc.
 Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -110,7 +110,7 @@ main (void)
   mpf_set_q (x, q);
   mpq_clear (q);
 
-  mpf_set_str (x, "3.1415e1", 10);
+  mpf_set_str (x, "31415e-3", 10);
   mpf_swap (x, y);
 
   /* Combined Initialization and Assignment Functions */
@@ -124,7 +124,7 @@ main (void)
   mpf_clear (x);
   mpf_init_set_d (x, 17.0);
   mpf_clear (x);
-  mpf_init_set_str (x, "3.1415e1", 10);
+  mpf_init_set_str (x, "31415e-3", 10);
 
   /* Conversion Functions */
 
@@ -182,20 +182,20 @@ main (void)
 
   mpf_set_prec (x, 15);
   mpf_set_prec (y, 15);
-  /* We may use src_fopen instead of fopen, but it is defined
-     in mpfr-test, and not in mpfr.h and gmp.h, and we want
-     to test theses includes files. */
-  f = fopen ("inp_str.data", "r");
-  if (f != NULL)
+
+  f = src_fopen ("inp_str.dat", "r");
+  if (f == NULL)
     {
-      i = mpf_inp_str (x, f, 10);
-      if ((i == 0) || mpf_cmp_ui (x, 31415))
-        {
-          printf ("Error in reading 1st line from file inp_str.data\n");
-          exit (1);
-        }
-      fclose (f);
+      printf ("cannot open file \"inp_str.dat\"\n");
+      exit (1);
     }
+  i = mpf_inp_str (x, f, 10);
+  if (i == 0 || mpf_cmp_si (x, -1700))
+    {
+      printf ("Error in reading 1st line from file \"inp_str.dat\"\n");
+      exit (1);
+    }
+  fclose (f);
 
   /* Miscellaneous Functions */
 

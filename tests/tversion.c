@@ -1,6 +1,6 @@
 /* Test file for mpfr_version.
 
-Copyright 2004-2015 Free Software Foundation, Inc.
+Copyright 2004-2016 Free Software Foundation, Inc.
 Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -105,6 +105,11 @@ main (void)
 
   if (strcmp (mpfr_get_patches (), "") != 0)
     printf ("[tversion] MPFR patches: %s\n", mpfr_get_patches ());
+
+  tests_start_mpfr ();
+  if (locale != NULL)
+    printf ("[tversion] Locale: %s\n", locale);
+  tests_end_mpfr ();
 
   return err;
 }

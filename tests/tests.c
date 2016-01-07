@@ -1,6 +1,6 @@
 /* Miscellaneous support for test programs.
 
-Copyright 2001-2015 Free Software Foundation, Inc.
+Copyright 2001-2016 Free Software Foundation, Inc.
 Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -103,6 +103,8 @@ set_fpu_prec (void)
 
 char             mpfr_rands_initialized = 0;
 gmp_randstate_t  mpfr_rands;
+
+char *locale = NULL;
 
 static mpfr_exp_t default_emin, default_emax;
 
@@ -234,7 +236,7 @@ tests_start_mpfr (void)
   /* Added on 2005-07-09. This allows to test MPFR under various
      locales. New bugs will probably be found, in particular with
      LC_ALL="tr_TR.ISO8859-9" because of the i/I character... */
-  setlocale (LC_ALL, "");
+  locale = setlocale (LC_ALL, "");
 #endif
 
 #ifdef MPFR_FPU_PREC
@@ -540,7 +542,10 @@ ld_trace (const char *name, long double ld)
   printf ("] %.20Lg\n", ld);
 }
 
-/* Open a file in the src directory - can't use fopen directly */
+/* Open a file in the SRCDIR directory, i.e. the "tests" source directory,
+   which is different from the current directory when objdir is different
+   from srcdir. One should generally use this function instead of fopen
+   directly. */
 FILE *
 src_fopen (const char *filename, const char *mode)
 {

@@ -1,6 +1,6 @@
 /* Utilities for MPFR developers, not exported.
 
-Copyright 1999-2015 Free Software Foundation, Inc.
+Copyright 1999-2016 Free Software Foundation, Inc.
 Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -204,7 +204,7 @@ struct __gmpfr_cache_s {
 typedef struct __gmpfr_cache_s mpfr_cache_t[1];
 typedef struct __gmpfr_cache_s *mpfr_cache_ptr;
 
-#if defined(MPFR_USE_THREAD_SAFE) && __GMP_LIBGMP_DLL
+#if __GMP_LIBGMP_DLL
 # define MPFR_WIN_THREAD_SAFE_DLL 1
 #endif
 

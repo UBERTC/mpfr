@@ -1,6 +1,6 @@
 /* auxiliary functions for MPFR tests.
 
-Copyright 1999-2015 Free Software Foundation, Inc.
+Copyright 1999-2016 Free Software Foundation, Inc.
 Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -178,6 +178,8 @@ mpfr_print_raw (mpfr_srcptr x)
     }
 }
 #endif
+
+extern char *locale;
 
 /* Random */
 extern char             mpfr_rands_initialized;
