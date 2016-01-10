@@ -14,7 +14,7 @@
 
 @SET_MAKE@
 
-# Copyright 2000-2015 Free Software Foundation, Inc.
+# Copyright 2000-2016 Free Software Foundation, Inc.
 # This Makefile.am is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -1496,6 +1496,11 @@ LOADLIBES = $(DEFS) $(AM_CPPFLAGS) $(CPPFLAGS) $(CFLAGS) $(top_builddir)/tests/.
 check_LTLIBRARIES = libfrtests.la
 libfrtests_la_SOURCES = mpfr-test.h memory.c rnd_mode.c tests.c cmp_str.c random2.c
 TESTS = $(check_PROGRAMS)
+
+# $(VALGRIND) is still there to be able to use a wrapper such as valgrind
+# in case old Automake. With Automake 1.13+, where a parallel test harness
+# is generated, use LOG_COMPILER instead. For additional information, see:
+# http://www.gnu.org/software/automake/manual/automake.html#Parallel-Test-Harness
 TESTS_ENVIRONMENT = MPFR_QUIET=1 $(VALGRIND)
 
 # The -no-install option prevents libtool from generating wrapper scripts
