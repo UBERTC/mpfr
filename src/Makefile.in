@@ -173,7 +173,8 @@ am_libmpfr_la_OBJECTS = exceptions.lo extract.lo uceil_exp2.lo \
 	buildopt.lo digamma.lo bernoulli.lo isregular.lo set_flt.lo \
 	get_flt.lo scale2.lo set_z_exp.lo ai.lo gammaonethird.lo \
 	grandom.lo fpif.lo set_float128.lo get_float128.lo rndna.lo \
-	nrandom.lo random_deviate.lo erandom.lo mpfr-mini-gmp.lo
+	nrandom.lo random_deviate.lo erandom.lo mpfr-mini-gmp.lo \
+	fmma.lo log_ui.lo
 libmpfr_la_OBJECTS = $(am_libmpfr_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -413,7 +414,7 @@ buildopt.c digamma.c bernoulli.c isregular.c set_flt.c get_flt.c	\
 scale2.c set_z_exp.c ai.c gammaonethird.c ieee_floats.h			\
 grandom.c fpif.c set_float128.c get_float128.c rndna.c nrandom.c        \
 random_deviate.h random_deviate.c erandom.c mpfr-mini-gmp.c             \
-mpfr-mini-gmp.h
+mpfr-mini-gmp.h fmma.c log_ui.c
 
 libmpfr_la_LIBADD = @LIBOBJS@
 
@@ -593,6 +594,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fits_ulong.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fits_ushort.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fma.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fmma.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fms.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fpif.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/frac.Plo@am__quote@
@@ -638,6 +640,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/log10.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/log1p.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/log2.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/log_ui.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/logging.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/min_prec.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/minmax.Plo@am__quote@
