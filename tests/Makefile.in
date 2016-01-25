@@ -111,14 +111,14 @@ check_PROGRAMS = tversion$(EXEEXT) tabort_prec_max$(EXEEXT) \
 	tfactorial$(EXEEXT) tfits$(EXEEXT) tfma$(EXEEXT) \
 	tfmma$(EXEEXT) tfmod$(EXEEXT) tfms$(EXEEXT) tfpif$(EXEEXT) \
 	tfprintf$(EXEEXT) tfrac$(EXEEXT) tfrexp$(EXEEXT) \
-	tgamma$(EXEEXT) tget_flt$(EXEEXT) tget_d$(EXEEXT) \
-	tget_d_2exp$(EXEEXT) tget_f$(EXEEXT) tget_ld_2exp$(EXEEXT) \
-	tget_set_d64$(EXEEXT) tget_sj$(EXEEXT) tget_str$(EXEEXT) \
-	tget_z$(EXEEXT) tgmpop$(EXEEXT) tgrandom$(EXEEXT) \
-	thyperbolic$(EXEEXT) thypot$(EXEEXT) tinp_str$(EXEEXT) \
-	tj0$(EXEEXT) tj1$(EXEEXT) tjn$(EXEEXT) tl2b$(EXEEXT) \
-	tlgamma$(EXEEXT) tli2$(EXEEXT) tlngamma$(EXEEXT) tlog$(EXEEXT) \
-	tlog10$(EXEEXT) tlog1p$(EXEEXT) tlog2$(EXEEXT) \
+	tgamma$(EXEEXT) tgamma_inc$(EXEEXT) tget_flt$(EXEEXT) \
+	tget_d$(EXEEXT) tget_d_2exp$(EXEEXT) tget_f$(EXEEXT) \
+	tget_ld_2exp$(EXEEXT) tget_set_d64$(EXEEXT) tget_sj$(EXEEXT) \
+	tget_str$(EXEEXT) tget_z$(EXEEXT) tgmpop$(EXEEXT) \
+	tgrandom$(EXEEXT) thyperbolic$(EXEEXT) thypot$(EXEEXT) \
+	tinp_str$(EXEEXT) tj0$(EXEEXT) tj1$(EXEEXT) tjn$(EXEEXT) \
+	tl2b$(EXEEXT) tlgamma$(EXEEXT) tli2$(EXEEXT) tlngamma$(EXEEXT) \
+	tlog$(EXEEXT) tlog10$(EXEEXT) tlog1p$(EXEEXT) tlog2$(EXEEXT) \
 	tlog_ui$(EXEEXT) tmin_prec$(EXEEXT) tminmax$(EXEEXT) \
 	tmodf$(EXEEXT) tmul$(EXEEXT) tmul_2exp$(EXEEXT) \
 	tmul_d$(EXEEXT) tmul_ui$(EXEEXT) tnext$(EXEEXT) \
@@ -524,6 +524,11 @@ tgamma_SOURCES = tgamma.c
 tgamma_OBJECTS = tgamma.$(OBJEXT)
 tgamma_LDADD = $(LDADD)
 tgamma_DEPENDENCIES = libfrtests.la $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(top_builddir)/src/libmpfr.la
+tgamma_inc_SOURCES = tgamma_inc.c
+tgamma_inc_OBJECTS = tgamma_inc.$(OBJEXT)
+tgamma_inc_LDADD = $(LDADD)
+tgamma_inc_DEPENDENCIES = libfrtests.la $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(top_builddir)/src/libmpfr.la
 tget_d_SOURCES = tget_d.c
 tget_d_OBJECTS = tget_d.$(OBJEXT)
@@ -1086,24 +1091,24 @@ SOURCES = $(libfrtests_la_SOURCES) mpf_compat.c mpfr_compat.c reuse.c \
 	teint.c teq.c terandom.c terandom_chisq.c terf.c texceptions.c \
 	texp.c texp10.c texp2.c texpm1.c tfactorial.c tfits.c tfma.c \
 	tfmma.c tfmod.c tfms.c tfpif.c tfprintf.c tfrac.c tfrexp.c \
-	tgamma.c tget_d.c tget_d_2exp.c tget_f.c tget_flt.c \
-	tget_ld_2exp.c tget_set_d64.c tget_sj.c tget_str.c tget_z.c \
-	tgmpop.c tgrandom.c thyperbolic.c thypot.c tinits.c tinp_str.c \
-	tinternals.c tisnan.c tisqrt.c tj0.c tj1.c tjn.c tl2b.c \
-	tlgamma.c tli2.c tlngamma.c tlog.c tlog10.c tlog1p.c tlog2.c \
-	tlog_ui.c tmin_prec.c tminmax.c tmodf.c tmul.c tmul_2exp.c \
-	tmul_d.c tmul_ui.c tnext.c tnrandom.c tnrandom_chisq.c \
-	tout_str.c toutimpl.c tpow.c tpow3.c tpow_all.c tpow_z.c \
-	tprintf.c trandom.c trandom_deviate.c trec_sqrt.c tremquo.c \
-	trint.c trndna.c troot.c tround_prec.c tsec.c tsech.c tset.c \
-	tset_d.c tset_exp.c tset_f.c tset_float128.c tset_ld.c \
-	tset_q.c tset_si.c tset_sj.c tset_str.c tset_z.c tset_z_exp.c \
-	tsgn.c tsi_op.c tsin.c tsin_cos.c tsinh.c tsinh_cosh.c \
-	tsprintf.c tsqr.c tsqrt.c tsqrt_ui.c tstckintc.c tstdint.c \
-	tstrtofr.c tsub.c tsub1sp.c tsub_d.c tsub_ui.c tsubnormal.c \
-	tsum.c tswap.c ttan.c ttanh.c ttrunc.c tui_div.c tui_pow.c \
-	tui_sub.c turandom.c tvalist.c tversion.c ty0.c ty1.c tyn.c \
-	tzeta.c tzeta_ui.c
+	tgamma.c tgamma_inc.c tget_d.c tget_d_2exp.c tget_f.c \
+	tget_flt.c tget_ld_2exp.c tget_set_d64.c tget_sj.c tget_str.c \
+	tget_z.c tgmpop.c tgrandom.c thyperbolic.c thypot.c tinits.c \
+	tinp_str.c tinternals.c tisnan.c tisqrt.c tj0.c tj1.c tjn.c \
+	tl2b.c tlgamma.c tli2.c tlngamma.c tlog.c tlog10.c tlog1p.c \
+	tlog2.c tlog_ui.c tmin_prec.c tminmax.c tmodf.c tmul.c \
+	tmul_2exp.c tmul_d.c tmul_ui.c tnext.c tnrandom.c \
+	tnrandom_chisq.c tout_str.c toutimpl.c tpow.c tpow3.c \
+	tpow_all.c tpow_z.c tprintf.c trandom.c trandom_deviate.c \
+	trec_sqrt.c tremquo.c trint.c trndna.c troot.c tround_prec.c \
+	tsec.c tsech.c tset.c tset_d.c tset_exp.c tset_f.c \
+	tset_float128.c tset_ld.c tset_q.c tset_si.c tset_sj.c \
+	tset_str.c tset_z.c tset_z_exp.c tsgn.c tsi_op.c tsin.c \
+	tsin_cos.c tsinh.c tsinh_cosh.c tsprintf.c tsqr.c tsqrt.c \
+	tsqrt_ui.c tstckintc.c tstdint.c tstrtofr.c tsub.c tsub1sp.c \
+	tsub_d.c tsub_ui.c tsubnormal.c tsum.c tswap.c ttan.c ttanh.c \
+	ttrunc.c tui_div.c tui_pow.c tui_sub.c turandom.c tvalist.c \
+	tversion.c ty0.c ty1.c tyn.c tzeta.c tzeta_ui.c
 DIST_SOURCES = $(libfrtests_la_SOURCES) mpf_compat.c mpfr_compat.c \
 	reuse.c tabort_defalloc1.c tabort_defalloc2.c \
 	tabort_prec_max.c tabs.c tacos.c tacosh.c tadd.c tadd1sp.c \
@@ -1116,8 +1121,8 @@ DIST_SOURCES = $(libfrtests_la_SOURCES) mpf_compat.c mpfr_compat.c \
 	tdiv.c tdiv_d.c tdiv_ui.c teint.c teq.c terandom.c \
 	terandom_chisq.c terf.c texceptions.c texp.c texp10.c texp2.c \
 	texpm1.c tfactorial.c tfits.c tfma.c tfmma.c tfmod.c tfms.c \
-	tfpif.c tfprintf.c tfrac.c tfrexp.c tgamma.c tget_d.c \
-	tget_d_2exp.c tget_f.c tget_flt.c tget_ld_2exp.c \
+	tfpif.c tfprintf.c tfrac.c tfrexp.c tgamma.c tgamma_inc.c \
+	tget_d.c tget_d_2exp.c tget_f.c tget_flt.c tget_ld_2exp.c \
 	tget_set_d64.c tget_sj.c tget_str.c tget_z.c tgmpop.c \
 	tgrandom.c thyperbolic.c thypot.c tinits.c tinp_str.c \
 	tinternals.c tisnan.c tisqrt.c tj0.c tj1.c tjn.c tl2b.c \
@@ -1883,6 +1888,10 @@ tgamma$(EXEEXT): $(tgamma_OBJECTS) $(tgamma_DEPENDENCIES) $(EXTRA_tgamma_DEPENDE
 	@rm -f tgamma$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(tgamma_OBJECTS) $(tgamma_LDADD) $(LIBS)
 
+tgamma_inc$(EXEEXT): $(tgamma_inc_OBJECTS) $(tgamma_inc_DEPENDENCIES) $(EXTRA_tgamma_inc_DEPENDENCIES) 
+	@rm -f tgamma_inc$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(tgamma_inc_OBJECTS) $(tgamma_inc_LDADD) $(LIBS)
+
 tget_d$(EXEEXT): $(tget_d_OBJECTS) $(tget_d_DEPENDENCIES) $(EXTRA_tget_d_DEPENDENCIES) 
 	@rm -f tget_d$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(tget_d_OBJECTS) $(tget_d_LDADD) $(LIBS)
@@ -2378,6 +2387,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tfrac.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tfrexp.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tgamma.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tgamma_inc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tget_d.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tget_d_2exp.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tget_f.Po@am__quote@
@@ -3258,6 +3268,13 @@ tfrexp.log: tfrexp$(EXEEXT)
 tgamma.log: tgamma$(EXEEXT)
 	@p='tgamma$(EXEEXT)'; \
 	b='tgamma'; \
+	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
+	--log-file $$b.log --trs-file $$b.trs \
+	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
+	"$$tst" $(AM_TESTS_FD_REDIRECT)
+tgamma_inc.log: tgamma_inc$(EXEEXT)
+	@p='tgamma_inc$(EXEEXT)'; \
+	b='tgamma_inc'; \
 	$(am__check_pre) $(LOG_DRIVER) --test-name "$$f" \
 	--log-file $$b.log --trs-file $$b.trs \
 	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
