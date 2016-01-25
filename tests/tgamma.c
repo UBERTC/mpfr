@@ -1,4 +1,4 @@
-/* mpfr_tgamma -- test file for gamma function
+/* Test file for gamma function
 
 Copyright 2001-2016 Free Software Foundation, Inc.
 Contributed by the AriC and Caramel projects, INRIA.
@@ -1047,6 +1047,19 @@ int
 main (int argc, char *argv[])
 {
   tests_start_mpfr ();
+
+  if (argc == 3) /* tgamma x prec: print gamma(x) to prec bits */
+    {
+      mpfr_prec_t p = atoi (argv[2]);
+      mpfr_t x;
+      mpfr_init2 (x, p);
+      mpfr_set_str (x, argv[1], 10, MPFR_RNDN);
+      mpfr_gamma (x, x, MPFR_RNDN);
+      mpfr_out_str (stdout, 10, 0, x, MPFR_RNDN);
+      printf ("\n");
+      mpfr_clear (x);
+      return 0;
+    }
 
   special ();
   special_overflow ();

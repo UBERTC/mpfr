@@ -101,6 +101,7 @@ Table of contents:
 4. New functions to implement
 ##############################################################################
 
+- implement mpfr_get_decimal128 and mpfr_set_decimal128
 - implement mpfr_log_ui to compute log(n) for an unsigned long n.
   We can write for argument reduction n = 2^k * n/2^k, where
   2/3 <= n/2^k < 4/3, i.e., k = floor(log2(3n))-1, thus
@@ -128,22 +129,22 @@ Table of contents:
   PolylogP, PolylogD, PolylogDold: see http://arxiv.org/abs/math.CA/0702243
     and the references herein.
   JBessel(n, x) = BesselJ(n+1/2, x)
-  IncompleteGamma [also wanted by <keith.briggs@bt.com> 4 Feb 2008: Gamma(a,x),
-    gamma(a,x), P(a,x), Q(a,x); see A&S 6.5, ref. [Smith01] in algorithms.bib.
-    Also asked by Christophe Dutang on 13 Jan 2012]
-    Gamma(s,x) = x^s*exp(-x)*sum(x^k/s/(s+1)/.../(s+k), k=0..infinity)
-               = sum((-1)^k*x^(s+k)/k!/(s+k), k=0..infinity)
   KBessel, KBessel2 [2nd kind]
   JacobiTheta
   LogIntegral
-  ExponentialIntegralE1
+  ExponentialIntegralE1 (formula 5.1.1 of Abramowitz and Stegun)
     E1(z) = int(exp(-t)/t, t=z..infinity), |arg z| < Pi
-    mpfr_eint1: implement E1(x) for x > 0, and Ei(-x) for x < 0
+    mpfr_eint1: implement E1(x) for x > 0, and Ei(-x) for x < 0 ?
     E1(NaN)  = NaN
     E1(+Inf) = +0
     E1(-Inf) = -Inf
     E1(+0)   = +Inf
     E1(-0)   = -Inf
+  (we could extend mpfr_eint for negative values so that mpfr_eint(-x)
+   = E1(x), cf 6.2.6 of http://dlmf.nist.gov/6.2, which matches the C
+   bindings in ISO/IEC 24747:2009, cf
+   https://sympa.inria.fr/sympa/arc/mpfr/2016-01/msg00042.html)
+  ExponentialIntegralEn (formula 5.1.4 of Abramowitz and Stegun)
   DawsonIntegral
   GammaD(x) = Gamma(x+1/2)
 - new functions of IEEE 754-2008, and more generally functions of the
@@ -249,6 +250,9 @@ Table of contents:
 
 - from gnumeric (www.gnome.org/projects/gnumeric/doc/function-reference.html):
   - beta
+    (also incomplete beta function, see message from Martin Maechler
+    <maechler@stat.math.ethz.ch> on 18 Jan 2016, and Section 6.6 in
+    Abramowitz & Stegun)
   - betaln
   - degrees
   - radians
@@ -533,6 +537,13 @@ Table of contents:
 - in tsum, add testcases for mpfr_sum triggering the bug fixed in r9722,
   that is, with a large error during the computation of the secondary term
   (when the TMD occurs).
+
+- add internal or public variants of some basic functions (+, -, *) with
+  mpz_t as the exponent for correctly rounded polynomials (like fmma),
+  in order to avoid internal overflow and underflow in extreme cases?
+  Alternatively, for fmma, modify add*.c and sub*.c code to define
+  mpfr_add_raw, which takes arrays of limbs and their precision, and the
+  positive exponent delta (as mpfr_uexp_t to be always representable).
 
 
 ##############################################################################
