@@ -1024,7 +1024,7 @@ any MPFR function or macro, whether or not there is an error.
 * Input and Output Functions::
 * Formatted Output Functions::
 * Integer and Remainder Related Functions::
-* Rounding Related Functions::
+* Rounding-Related Functions::
 * Miscellaneous Functions::
 * Exception Related Functions::
 * Compatibility with MPF::
@@ -2604,7 +2604,7 @@ the null-terminator, or a negative value if an error occurred.
 @c @code{EOVERFLOW}.
 @end deftypefun
 
-@node Integer and Remainder Related Functions, Rounding Related Functions, Formatted Output Functions, MPFR Interface
+@node Integer and Remainder Related Functions, Rounding-Related Functions, Formatted Output Functions, MPFR Interface
 @comment  node-name,  next,  previous,  up
 @cindex Integer related functions
 @cindex Remainder related functions
@@ -2748,9 +2748,9 @@ additive argument reduction.
 Return non-zero iff @var{op} is an integer.
 @end deftypefun
 
-@node Rounding Related Functions, Miscellaneous Functions, Integer and Remainder Related Functions, MPFR Interface
+@node Rounding-Related Functions, Miscellaneous Functions, Integer and Remainder Related Functions, MPFR Interface
 @cindex Rounding mode related functions
-@section Rounding Related Functions
+@section Rounding-Related Functions
 
 @deftypefun void mpfr_set_default_rounding_mode (mpfr_rnd_t @var{rnd})
 Set the default rounding mode to @var{rnd}.
@@ -2793,29 +2793,40 @@ with @code{MPFR_DECL_INIT} or with @code{mpfr_custom_init_set}
 Assuming @var{b} is an approximation of an unknown number
 @var{x} in the direction @var{rnd1} with error at most two to the power
 E(b)-@var{err} where E(b) is the exponent of @var{b}, return a non-zero
-value if one is able to round correctly @var{x} to precision
-@var{prec} with the direction @var{rnd2},
-and 0 otherwise (including for NaN and Inf).
+value if one is able to round correctly @var{x} to precision @var{prec}
+with the direction @var{rnd2} assuming an unbounded exponent range, and
+0 otherwise (including for NaN and Inf).
+In other words, if the error on @var{b} is bounded by two to the power
+@var{k} ulps, and @var{b} has precision @var{prec},
+you should give @var{err}=@var{prec}@minus{}@var{k}.
 This function @strong{does not modify} its arguments.
 
-If @var{rnd1} is @code{MPFR_RNDN}, then the sign of the error is
-unknown, but its absolute value is the same, so that the possible range
-is twice as large as with a directed rounding for @var{rnd1}.
+If @var{rnd1} is @code{MPFR_RNDN}, the error is considered to be either
+positive or negative, thus the possible range
+is twice as large as with a directed rounding for @var{rnd1} (with the
+same value of @var{err}).
 
 Note: if one wants to also determine the correct @ref{ternary value} when
-rounding @var{b} to precision @var{prec} with rounding mode @var{rnd},
-a useful trick is the following:
+rounding @var{b} to precision @var{prec} with rounding mode @var{rnd2},
+a useful trick is the following (where @code{MPFR_RNDZ} can be replaced by
+any directed rounding mode):
 @example
-if (mpfr_can_round (b, err, MPFR_RNDN, MPFR_RNDZ,
-    prec + (rnd == MPFR_RNDN)))
-   ...
+if (mpfr_can_round (b, err, rnd1, MPFR_RNDZ, prec + (rnd2 == MPFR_RNDN)))
+@{
+    /* round the approximation 'b' to the result 'r' of 'prec' bits
+       with rounding mode 'rnd2' and get the ternary value 'inex' */
+    inex = mpfr_set (r, b, rnd2);
+@}
 @end example
-Indeed, if @var{rnd} is @code{MPFR_RNDN}, this will check if one can
+Indeed, if @var{rnd2} is @code{MPFR_RNDN}, this will check if one can
 round to @var{prec}+1 bits with a directed rounding:
 if so, one can surely round to nearest to @var{prec} bits,
 and in addition one can determine the correct ternary value, which would not
 be the case when @var{b} is near from a value exactly representable on
 @var{prec} bits.
+
+A detailed example is available in the @file{examples} subdirectory,
+file @file{can_round.c}.
 @end deftypefun
 
 @deftypefun mpfr_prec_t mpfr_min_prec (mpfr_t @var{x})
@@ -2864,7 +2875,7 @@ int i = mpfr_round_nearest_away(mpfr_add_ui, r, f, ul);
 @end example
 @end deftypefn
 
-@node Miscellaneous Functions, Exception Related Functions, Rounding Related Functions, MPFR Interface
+@node Miscellaneous Functions, Exception Related Functions, Rounding-Related Functions, MPFR Interface
 @comment  node-name,  next,  previous,  up
 @cindex Miscellaneous float functions
 @section Miscellaneous Functions

@@ -378,7 +378,7 @@ mpfr_div (mpfr_ptr q, mpfr_srcptr u, mpfr_srcptr v, mpfr_rnd_t rnd_mode)
 
   /* for large precisions, try using truncated division first */
   if (q0size >= 32 && mpfr_div_with_mpz_tdiv_q (q, u, v, rnd_mode, &inex))
-        return inex;
+    return inex;
 
   MPFR_TMP_MARK(marker);
 
@@ -455,24 +455,23 @@ mpfr_div (mpfr_ptr q, mpfr_srcptr u, mpfr_srcptr v, mpfr_rnd_t rnd_mode)
 
       qp = MPFR_TMP_LIMBS_ALLOC (n);
       qh = mpfr_divhigh_n (qp, ap, bp, n);
+      MPFR_ASSERTD (qh == 0 || qh == 1);
       /* in all cases, the error is at most (2n+2) ulps on qh*B^n+{qp,n},
          cf algorithms.tex */
 
       p = n * GMP_NUMB_BITS - MPFR_INT_CEIL_LOG2 (2 * n + 2);
-      /* if qh is 1, then we need only PREC(q)-1 bits of {qp,n},
-         if rnd=RNDN, we need to be able to round with a directed rounding
-            and one more bit */
+      /* If rnd=RNDN, we need to be able to round with a directed rounding
+         and one more bit. */
+      if (qh == 1)
+        {
+          mpn_rshift (qp, qp, n, 1);
+          qp[n - 1] ^= MPFR_LIMB_HIGHBIT;
+        }
       if (MPFR_LIKELY (mpfr_round_p (qp, n, p,
-                                 MPFR_PREC(q) + (rnd_mode == MPFR_RNDN) - qh)))
+                                     MPFR_PREC(q) + (rnd_mode == MPFR_RNDN))))
         {
           /* we can round correctly whatever the rounding mode */
-          if (qh == 0)
-            MPN_COPY (q0p, qp + 1, q0size);
-          else
-            {
-              mpn_rshift (q0p, qp + 1, q0size, 1);
-              q0p[q0size - 1] ^= MPFR_LIMB_HIGHBIT;
-            }
+          MPN_COPY (q0p, qp + 1, q0size);
           q0p[0] &= ~MPFR_LIMB_MASK(sh); /* put to zero low sh bits */
 
           if (rnd_mode == MPFR_RNDN) /* round to nearest */
