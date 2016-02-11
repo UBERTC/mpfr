@@ -1,7 +1,7 @@
 /* Test file for mpfr_ui_div.
 
 Copyright 2000-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -55,7 +55,7 @@ check_inexact (void)
   mpfr_init (y);
   mpfr_init (z);
 
-  for (px = 2; px < 300; px++)
+  for (px = MPFR_PREC_MIN; px < 300; px++)
     {
       mpfr_set_prec (x, px);
       do
@@ -64,7 +64,7 @@ check_inexact (void)
         }
       while (mpfr_cmp_ui (x, 0) == 0);
       u = randlimb ();
-      for (py = 2; py < 300; py++)
+      for (py = MPFR_PREC_MIN; py < 300; py++)
         {
           mpfr_set_prec (y, py);
           mpfr_set_prec (z, py + px);
@@ -244,7 +244,7 @@ main (int argc, char *argv[])
         "-6.8938315017943889615e-297");
   check_overflow ();
 
-  test_generic (2, 1000, 100);
+  test_generic (MPFR_PREC_MIN, 1000, 100);
 
   /* inv is for 1/x */
   data_check ("data/inv", mpfr_inv, "mpfr_ui_div(1,x)");

@@ -1,7 +1,7 @@
 /* Test file for mpfr_root.
 
 Copyright 2005-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -21,6 +21,15 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-test.h"
+
+#include <time.h>
+
+/* return the cpu time in seconds */
+static double
+cputime (void)
+{
+  return (double) clock () / (double) CLOCKS_PER_SEC;
+}
 
 static void
 special (void)
@@ -49,7 +58,7 @@ special (void)
       exit (1);
     }
 
-  /* root(-Inf, 17) =  -Inf */
+  /* root(-Inf, 17) = -Inf */
   mpfr_set_inf (x, -1);
   mpfr_root (y, x, 17, MPFR_RNDN);
   if (!mpfr_inf_p (y) || mpfr_sgn (y) > 0)
@@ -66,7 +75,7 @@ special (void)
       exit (1);
     }
 
-  /* root(+/-0) =  +/-0 */
+  /* root(+/-0, k) = +/-0 for k > 0 */
   mpfr_set_ui (x, 0, MPFR_RNDN);
   mpfr_root (y, x, 17, MPFR_RNDN);
   if (mpfr_cmp_ui (y, 0) || mpfr_sgn (y) < 0)
@@ -187,64 +196,39 @@ special (void)
   i = mpfr_root (y, x, 1, MPFR_RNDN);
   if (mpfr_cmp_ui (x, 17) || i != 0)
     {
-      printf ("Error in root (17^(1/1))\n");
+      printf ("Error in root for 17^(1/1)\n");
       exit (1);
     }
 
-#if 0
-  /* Check for k == 0:
-     For 0 <= x < 1 => +0.
-     For x = 1      => 1.
-     For x > 1,     => +Inf.
-     For x < 0      => NaN.   */
-  i = mpfr_root (y, x, 0, MPFR_RNDN);
-  if (!MPFR_IS_INF (y) || !MPFR_IS_POS (y) || i != 0)
-    {
-      printf ("Error in root 17^(1/0)\n");
-      exit (1);
-    }
-  mpfr_set_ui (x, 1, MPFR_RNDN);
-  i = mpfr_root (y, x, 0, MPFR_RNDN);
-  if (mpfr_cmp_ui (y, 1) || i != 0)
-    {
-      printf ("Error in root 1^(1/0)\n");
-      exit (1);
-    }
-  mpfr_set_ui (x, 0, MPFR_RNDN);
-  i = mpfr_root (y, x, 0, MPFR_RNDN);
-  if (!MPFR_IS_ZERO (y) || !MPFR_IS_POS (y) || i != 0)
-    {
-      printf ("Error in root 0+^(1/0)\n");
-      exit (1);
-    }
-  MPFR_CHANGE_SIGN (x);
-  i = mpfr_root (y, x, 0, MPFR_RNDN);
-  if (!MPFR_IS_ZERO (y) || !MPFR_IS_POS (y) || i != 0)
-    {
-      printf ("Error in root 0-^(1/0)\n");
-      exit (1);
-    }
-  mpfr_set_ui_2exp (x, 17, -5, MPFR_RNDD);
-  i = mpfr_root (y, x, 0, MPFR_RNDN);
-  if (!MPFR_IS_ZERO (y) || !MPFR_IS_POS (y) || i != 0)
-    {
-      printf ("Error in root (17/2^5)^(1/0)\n");
-      exit (1);
-    }
-#endif
   mpfr_set_ui (x, 0, MPFR_RNDN);
   i = mpfr_root (y, x, 0, MPFR_RNDN);
   if (!MPFR_IS_NAN (y) || i != 0)
     {
-      printf ("Error in root 0+^(1/0)\n");
+      printf ("Error in root for (+0)^(1/0)\n");
       exit (1);
     }
+  mpfr_neg (x, x, MPFR_RNDN);
+  i = mpfr_root (y, x, 0, MPFR_RNDN);
+  if (!MPFR_IS_NAN (y) || i != 0)
+    {
+      printf ("Error in root for (-0)^(1/0)\n");
+      exit (1);
+    }
+
+  mpfr_set_ui (x, 1, MPFR_RNDN);
+  i = mpfr_root (y, x, 0, MPFR_RNDN);
+  if (!MPFR_IS_NAN (y) || i != 0)
+    {
+      printf ("Error in root for 1^(1/0)\n");
+      exit (1);
+    }
+
   /* Check for k==2 */
   mpfr_set_si (x, -17, MPFR_RNDD);
   i = mpfr_root (y, x, 2, MPFR_RNDN);
   if (!MPFR_IS_NAN (y) || i != 0)
     {
-      printf ("Error in root (-17)^(1/2)\n");
+      printf ("Error in root for (-17)^(1/2)\n");
       exit (1);
     }
 
@@ -252,26 +236,173 @@ special (void)
   mpfr_clear (y);
 }
 
+/* https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=812779
+ * https://bugzilla.gnome.org/show_bug.cgi?id=756960
+ * is a GNOME Calculator bug (mpfr_root applied on a negative integer,
+ * which is converted to an unsigned integer), but the strange result
+ * is also due to a bug in MPFR.
+ */
+static void
+bigint (void)
+{
+  mpfr_t x, y;
+
+  mpfr_inits2 (64, x, y, (mpfr_ptr) 0);
+
+  mpfr_set_ui (x, 10, MPFR_RNDN);
+  if (sizeof (unsigned long) * CHAR_BIT == 64)
+    {
+      mpfr_root (x, x, ULONG_MAX, MPFR_RNDN);
+      mpfr_set_ui_2exp (y, 1, -63, MPFR_RNDN);
+      mpfr_add_ui (y, y, 1, MPFR_RNDN);
+      if (! mpfr_equal_p (x, y))
+        {
+          printf ("Error in bigint for ULONG_MAX\n");
+          printf ("Expected ");
+          mpfr_dump (y);
+          printf ("Got      ");
+          mpfr_dump (x);
+          exit (1);
+        }
+    }
+
+  mpfr_set_ui (x, 10, MPFR_RNDN);
+  mpfr_root (x, x, 1234567890, MPFR_RNDN);
+  mpfr_set_str_binary (y,
+    "1.00000000000000000000000000001000000000101011000101000110010001");
+  if (! mpfr_equal_p (x, y))
+    {
+      printf ("Error in bigint for 1234567890\n");
+      printf ("Expected ");
+      mpfr_dump (y);
+      printf ("Got      ");
+      mpfr_dump (x);
+      exit (1);
+    }
+
+  mpfr_clears (x, y, (mpfr_ptr) 0);
+}
+
 #define TEST_FUNCTION mpfr_root
 #define INTEGER_TYPE unsigned long
-#define INT_RAND_FUNCTION() (INTEGER_TYPE) (randlimb () % 3 +2)
+#define INT_RAND_FUNCTION() \
+  (INTEGER_TYPE) (randlimb () & 1 ? randlimb () : randlimb () % 3 + 2)
 #include "tgeneric_ui.c"
 
+static void
+exact_powers (unsigned long bmax, unsigned long kmax)
+{
+  long b, k;
+  mpz_t z;
+  mpfr_t x, y;
+  int inex, neg;
+
+  mpz_init (z);
+  for (b = 2; b <= bmax; b++)
+    for (k = 1; k <= kmax; k++)
+      {
+        mpz_ui_pow_ui (z, b, k);
+        mpfr_init2 (x, mpz_sizeinbase (z, 2));
+        mpfr_set_ui (x, b, MPFR_RNDN);
+        mpfr_pow_ui (x, x, k, MPFR_RNDN);
+        mpz_set_ui (z, b);
+        mpfr_init2 (y, mpz_sizeinbase (z, 2));
+        for (neg = 0; neg <= 1; neg++)
+          {
+            inex = mpfr_root (y, x, k, MPFR_RNDN);
+            if (inex != 0)
+              {
+                printf ("Error in exact_powers, b=%ld, k=%ld\n", b, k);
+                printf ("Expected inex=0, got %d\n", inex);
+                exit (1);
+              }
+            if (neg && (k & 1) == 0)
+              {
+                if (!MPFR_IS_NAN (y))
+                  {
+                    printf ("Error in exact_powers, b=%ld, k=%ld\n", b, k);
+                    printf ("Expected y=NaN\n");
+                    printf ("Got      ");
+                    mpfr_out_str (stdout, 10, 0, y, MPFR_RNDN);
+                    printf ("\n");
+                    exit (1);
+                  }
+              }
+            else if (MPFR_IS_NAN (y) || mpfr_cmp_si (y, b) != 0)
+              {
+                printf ("Error in exact_powers, b=%ld, k=%ld\n", b, k);
+                printf ("Expected y=%ld\n", b);
+                printf ("Got      ");
+                mpfr_out_str (stdout, 10, 0, y, MPFR_RNDN);
+                printf ("\n");
+                exit (1);
+              }
+            mpfr_neg (x, x, MPFR_RNDN);
+            b = -b;
+          }
+        mpfr_clear (x);
+        mpfr_clear (y);
+      }
+  mpz_clear (z);
+}
+
 int
-main (void)
+main (int argc, char *argv[])
 {
   mpfr_t x;
   int r;
   mpfr_prec_t p;
   unsigned long k;
 
+  if (argc == 3) /* troot prec k */
+    {
+      double st1, st2;
+      unsigned long k;
+      int l;
+      mpfr_t y;
+      p = strtoul (argv[1], NULL, 10);
+      k = strtoul (argv[2], NULL, 10);
+      mpfr_init2 (x, p);
+      mpfr_init2 (y, p);
+      mpfr_const_pi (y, MPFR_RNDN);
+      mpfr_root (x, y, k, MPFR_RNDN); /* to warm up cache */
+      st1 = cputime ();
+      for (l = 0; cputime () - st1 < 1.0; l++)
+        mpfr_root (x, y, k, MPFR_RNDN);
+      st1 = (cputime () - st1) / l;
+      printf ("mpfr_root       took %.2es\n", st1);
+
+      /* compare with x^(1/k) = exp(1/k*log(x)) */
+      /* first warm up cache */
+      mpfr_swap (x, y);
+      mpfr_log (y, x, MPFR_RNDN);
+      mpfr_div_ui (y, y, k, MPFR_RNDN);
+      mpfr_exp (y, y, MPFR_RNDN);
+
+      st2 = cputime ();
+      for (l = 0; cputime () - st2 < 1.0; l++)
+        {
+          mpfr_log (y, x, MPFR_RNDN);
+          mpfr_div_ui (y, y, k, MPFR_RNDN);
+          mpfr_exp (y, y, MPFR_RNDN);
+        }
+      st2 = (cputime () - st2) / l;
+      printf ("exp(1/k*log(x)) took %.2es\n", st2);
+
+      mpfr_clear (x);
+      mpfr_clear (y);
+      return 0;
+    }
+
   tests_start_mpfr ();
 
+  exact_powers (3, 1000);
   special ();
+  bigint ();
 
   mpfr_init (x);
 
-  for (p = 2; p < 100; p++)
+  for (p = MPFR_PREC_MIN; p < 100; p++)
     {
       mpfr_set_prec (x, p);
       for (r = 0; r < MPFR_RND_MAX; r++)
@@ -324,7 +455,7 @@ main (void)
     }
   mpfr_clear (x);
 
-  test_generic_ui (2, 200, 30);
+  test_generic_ui (MPFR_PREC_MIN, 200, 30);
 
   tests_end_mpfr ();
   return 0;

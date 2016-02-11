@@ -1,7 +1,7 @@
 /* Test file for mpfr_log.
 
 Copyright 1999, 2001-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -347,7 +347,7 @@ main (int argc, char *argv[])
 
   x_near_one ();
 
-  test_generic (2, 100, 40);
+  test_generic (MPFR_PREC_MIN, 100, 40);
 
   data_check ("data/log", mpfr_log, "mpfr_log");
   bad_cases (mpfr_log, mpfr_exp, "mpfr_log", 256, -30, 30, 4, 128, 800, 50);

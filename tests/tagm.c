@@ -1,7 +1,7 @@
 /* Test file for mpfr_agm.
 
 Copyright 1999, 2001-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -327,7 +327,7 @@ main (int argc, char* argv[])
   check4 ("1.0", "44.0", MPFR_RNDU, "13.3658354512981243907", 1);
   check4 ("1.0", "3.7252902984619140625e-9", MPFR_RNDU,
           "0.07553933569711989657765", 1);
-  test_generic (2, 300, 17);
+  test_generic (MPFR_PREC_MIN, 300, 17);
 
   tests_end_mpfr ();
   return 0;

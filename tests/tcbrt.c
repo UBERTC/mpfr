@@ -1,7 +1,7 @@
 /* Test file for mpfr_cbrt.
 
 Copyright 2002-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -207,7 +207,7 @@ main (void)
     }
   mpfr_clear (x);
 
-  test_generic (2, 200, 10);
+  test_generic (MPFR_PREC_MIN, 200, 10);
 
   data_check ("data/cbrt", mpfr_cbrt, "mpfr_cbrt");
 

@@ -1,7 +1,7 @@
 /* Test file for mpfr_log10.
 
 Copyright 2001-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -58,7 +58,7 @@ main (int argc, char *argv[])
 
   tests_start_mpfr ();
 
-  test_generic (2, 100, 20);
+  test_generic (MPFR_PREC_MIN, 100, 20);
 
   mpfr_init2 (x, 53);
   mpfr_init2 (y, 53);

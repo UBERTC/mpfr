@@ -1,5 +1,5 @@
 Copyright 1999-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -132,18 +132,6 @@ Table of contents:
   KBessel, KBessel2 [2nd kind]
   JacobiTheta
   LogIntegral
-  ExponentialIntegralE1 (formula 5.1.1 of Abramowitz and Stegun)
-    E1(z) = int(exp(-t)/t, t=z..infinity), |arg z| < Pi
-    mpfr_eint1: implement E1(x) for x > 0, and Ei(-x) for x < 0 ?
-    E1(NaN)  = NaN
-    E1(+Inf) = +0
-    E1(-Inf) = -Inf
-    E1(+0)   = +Inf
-    E1(-0)   = -Inf
-  (we could extend mpfr_eint for negative values so that mpfr_eint(-x)
-   = E1(x), cf 6.2.6 of http://dlmf.nist.gov/6.2, which matches the C
-   bindings in ISO/IEC 24747:2009, cf
-   https://sympa.inria.fr/sympa/arc/mpfr/2016-01/msg00042.html)
   ExponentialIntegralEn (formula 5.1.4 of Abramowitz and Stegun)
   DawsonIntegral
   GammaD(x) = Gamma(x+1/2)
@@ -311,8 +299,6 @@ Table of contents:
         full precision when precision <= MPFR_EXP_THRESHOLD. The reason is
         that argument reduction kills sparsity. Maybe avoid argument reduction
         for sparse input?
-- speed up const_euler for large precision [for x=1.1, prec=16610, it takes
-        75% of the total time of eint(x)!]
 - speed up mpfr_atan for large arguments (to speed up mpc_log) see FR #6198
 - improve mpfr_sin on values like ~pi (do not compute sin from cos, because
   of the cancellation). For instance, reduce the input modulo pi/2 in
@@ -544,6 +530,8 @@ Table of contents:
   Alternatively, for fmma, modify add*.c and sub*.c code to define
   mpfr_add_raw, which takes arrays of limbs and their precision, and the
   positive exponent delta (as mpfr_uexp_t to be always representable).
+  The exponent delta should be sufficient for now since it can be bounded
+  by MPFR_PREC_MAX+1 if need be.
 
 
 ##############################################################################

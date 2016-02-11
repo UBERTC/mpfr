@@ -1,7 +1,7 @@
 /* Test file for mpfr_const_log2.
 
 Copyright 1999, 2001-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -29,7 +29,7 @@ check (mpfr_prec_t p0, mpfr_prec_t p1)
 {
   mpfr_t x, y, z;
   mpfr_rnd_t rnd;
-  int dif;
+  int inex, inex_ref;
 
   mpfr_init (x);
   mpfr_init (y);
@@ -37,22 +37,27 @@ check (mpfr_prec_t p0, mpfr_prec_t p1)
   mpfr_const_log2 (z, MPFR_RNDN);
   mpfr_clear_cache (__gmpfr_cache_const_log2);
 
-  for (; p0<=p1; p0++)
+  for (; p0 <= p1; p0++)
     {
       mpfr_set_prec (x, p0);
       mpfr_set_prec (y, p0);
+      RND_LOOP (rnd)
         {
-          rnd = RND_RAND ();
-          mpfr_const_log2 (x, rnd);
-          mpfr_set (y, z, rnd);
-          if ((dif = mpfr_cmp (x, y))
-              && mpfr_can_round (z, mpfr_get_prec(z), MPFR_RNDN,
-                                                 rnd, p0))
+          inex = mpfr_const_log2 (x, rnd);
+          inex_ref = mpfr_set (y, z, rnd);
+          if (! mpfr_can_round (z, mpfr_get_prec (z), MPFR_RNDN, rnd, p0))
             {
-              printf ("mpfr_const_log2 fails for prec=%u, rnd=%s Diff=%d\n",
-                      (unsigned int) p0, mpfr_print_rnd_mode (rnd), dif);
+              printf ("increase guard precision in check()\n");
+              exit (1);
+            }
+          if (mpfr_cmp (x, y) || inex != inex_ref)
+            {
+              printf ("mpfr_const_log2 fails for prec=%u, rnd=%s\n",
+                      (unsigned int) p0, mpfr_print_rnd_mode (rnd));
               printf ("expected "), mpfr_dump (y);
               printf ("got      "), mpfr_dump (x);
+              printf ("expected inex = %d\n", inex_ref);
+              printf ("got      inex = %d\n", inex);
               exit (1);
             }
         }
@@ -159,7 +164,9 @@ main (int argc, char *argv[])
 
   mpfr_init (x);
 
-  check (2, 1000);
+  /* increase the 2nd argument to say 300000 to perform the exhaustive search
+     in src/const_log2.c */
+  check (MPFR_PREC_MIN, 1000);
 
   /* check precision of 2 bits */
   mpfr_set_prec (x, 2);
@@ -203,7 +210,7 @@ main (int argc, char *argv[])
   check_large ();
   check_cache ();
 
-  test_generic (2, 200, 1);
+  test_generic (MPFR_PREC_MIN, 200, 1);
 
   tests_end_mpfr ();
   return 0;

@@ -1,7 +1,7 @@
 /* Test file for gamma function
 
 Copyright 2001-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -357,7 +357,7 @@ special_overflow (void)
       exit (1);
     }
 
-  set_emax (1073741823);
+  set_emax (1073741821);
   mpfr_set_prec (x, 29);
   mpfr_set_prec (y, 29);
   mpfr_set_str (x, "423786866", 10, MPFR_RNDN);
@@ -1065,7 +1065,7 @@ main (int argc, char *argv[])
   special_overflow ();
   exprange ();
   tiny (argc == 1);
-  test_generic (2, 100, 2);
+  test_generic (MPFR_PREC_MIN, 100, 2);
   gamma_integer ();
   test20071231 ();
   test20100709 ();

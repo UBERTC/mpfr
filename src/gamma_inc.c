@@ -1,7 +1,7 @@
 /* mpfr_gamma_inc -- incomplete gamma function
 
 Copyright 2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -23,7 +23,8 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #define MPFR_NEED_LONGLONG_H
 #include "mpfr-impl.h"
 
-/* The incomplete gamma function is defined as:
+/* The incomplete gamma function is defined for x >= 0 and a not a negative
+   integer by:
 
    gamma_inc(a,x) := Gamma(a,x) = int(t^(a-1) * exp(-t), t=x..infinity)
 
@@ -31,11 +32,17 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
    gamma(a,x) = int(t^(a-1) * exp(-t), t=0..x).
 
-   The function gamma(a,x) satisfies the Taylor expansions:
+   The function gamma(a,x) satisfies the Taylor expansions (we use the second
+   one in the code below):
 
    gamma(a,x) = x^a * sum((-x)^k/k!/(a+k), k=0..infinity)
 
-   gamma(a,x) = x^a * exp(-x) * sum(x^k/(a*(a+1)*...*(a+k)), k=0..infinity) */
+   gamma(a,x) = x^a * exp(-x) * sum(x^k/(a*(a+1)*...*(a+k)), k=0..infinity)
+
+   For a negative integer, we have:
+
+   gamma(-n,x) = (-1)^n/n [E_1(x) - exp(-x) sum((-1)^j*j!/x^(j+1), j=0..n-1)]
+*/
 
 int
 mpfr_gamma_inc (mpfr_ptr y, mpfr_srcptr a, mpfr_srcptr x, mpfr_rnd_t rnd)
@@ -58,21 +65,20 @@ mpfr_gamma_inc (mpfr_ptr y, mpfr_srcptr a, mpfr_srcptr x, mpfr_rnd_t rnd)
           MPFR_RET_NAN;
         }
 
+      /* Note: for x < 0, gamma_inc (a, x) is a complex number */
+
       if (MPFR_IS_INF (a) || MPFR_IS_INF (x))
         {
           if (MPFR_IS_INF (a) && MPFR_IS_INF (x))
             {
-              if (MPFR_IS_POS (a) && MPFR_IS_POS (x))
+              if ((MPFR_IS_POS (a) && MPFR_IS_POS (x)) || MPFR_IS_NEG (x))
                 {
-                  /* gamma_inc(+Inf,+Inf) = NaN because
-                     gamma_inc(x,x) tends to +Inf but
-                     gamma_inc(x,x^2) tends to +0 */
-                  MPFR_SET_NAN (y);
-                  MPFR_RET_NAN;
-                }
-              else if (MPFR_IS_NEG (x))
-                {
-                  /* gamma_inc(+/-Inf,-Inf) = NaN (complex number) */
+                  /* (a) gamma_inc(+Inf,+Inf) = NaN because
+                         gamma_inc(x,x) tends to +Inf but
+                         gamma_inc(x,x^2) tends to +0.
+                     (b) gamma_inc(+/-Inf,-Inf) = NaN, for example
+                         gamma_inc (a, -a) is a complex number
+                         for a not an integer */
                   MPFR_SET_NAN (y);
                   MPFR_RET_NAN;
                 }
@@ -88,6 +94,7 @@ mpfr_gamma_inc (mpfr_ptr y, mpfr_srcptr a, mpfr_srcptr x, mpfr_rnd_t rnd)
             {
               if (MPFR_IS_INF (a))
                 {
+                  MPFR_ASSERTD (MPFR_IS_INF (a) && MPFR_IS_FP (x));
                   if (MPFR_IS_POS (a))
                     {
                       /* gamma_inc(+Inf, x) = +Inf */
@@ -119,11 +126,21 @@ mpfr_gamma_inc (mpfr_ptr y, mpfr_srcptr a, mpfr_srcptr x, mpfr_rnd_t rnd)
                         }
                     }
                 }
-              else /* x is infinite: integral tends to zero */
+              else
                 {
-                  MPFR_SET_ZERO (y);
-                  MPFR_SET_POS (y);
-                  MPFR_RET (0);  /* exact */
+                  MPFR_ASSERTD (MPFR_IS_FP (a) && MPFR_IS_INF (x));
+                  if (MPFR_IS_POS (x))
+                    {
+                      /* x is +Inf: integral tends to zero */
+                      MPFR_SET_ZERO (y);
+                      MPFR_SET_POS (y);
+                      MPFR_RET (0);  /* exact */
+                    }
+                  else /* NaN for x < 0 */
+                    {
+                      MPFR_SET_NAN (y);
+                      MPFR_RET_NAN;
+                    }
                 }
             }
         }
@@ -139,17 +156,17 @@ mpfr_gamma_inc (mpfr_ptr y, mpfr_srcptr a, mpfr_srcptr x, mpfr_rnd_t rnd)
                   MPFR_RET_NAN;
                 }
               else if (MPFR_IS_ZERO (x))
-                {
-                  /* gamma_inc(a,0) = +Inf */
-                  MPFR_SET_INF (y);
-                  MPFR_SET_POS (y);
-                  MPFR_RET (0);  /* exact */
-                }
+                /* gamma_inc(a,0) = gamma(a) */
+                return mpfr_gamma (y, a, rnd); /* a=+0->+Inf, a=-0->-Inf */
               else
                 {
-                  /* gamma_inc (0, x) = int (exp(-t), t=x..infinity) = Ei(1,x)
-                     but the mpfr_eint function returns -Re(Ei(1,-x)) */
-                  MPFR_ASSERTN(0);
+                  /* gamma_inc (0, x) = int (exp(-t), t=x..infinity) = E1(x) */
+                  mpfr_t minus_x;
+                  MPFR_TMP_INIT_NEG(minus_x, x);
+                  /* mpfr_eint(x) for x < 0 returns -E1(-x) */
+                  inex = mpfr_eint (y, minus_x, MPFR_INVERT_RND(rnd));
+                  MPFR_CHANGE_SIGN(y);
+                  return -inex;
                 }
             }
           else /* x = 0: gamma_inc(a,0) = gamma(a) */
@@ -157,47 +174,92 @@ mpfr_gamma_inc (mpfr_ptr y, mpfr_srcptr a, mpfr_srcptr x, mpfr_rnd_t rnd)
         }
     }
 
-  MPFR_ASSERTN(MPFR_SIGN(a) > 0);
-  MPFR_ASSERTN(MPFR_SIGN(x) > 0);
+  /* for x < 0 return NaN */
+  if (MPFR_SIGN(x) < 0)
+    {
+      MPFR_SET_NAN (y);
+      MPFR_RET_NAN;
+    }
 
   MPFR_SAVE_EXPO_MARK (expo);
 
   w = MPFR_PREC(y) + 13; /* working precision */
 
   MPFR_GROUP_INIT_2(group, w, s, t);
-  mpfr_init2 (u, w); /* u is special (see below) */
+  mpfr_init2 (u, 2); /* u is special (see below) */
   MPFR_ZIV_INIT (loop, w);
   for (;;)
     {
+      mpfr_exp_t expu, precu;
+      mpfr_t s_abs;
+      mpfr_exp_t decay = 0;
+
       /* Note: in the error analysis below, theta represents any value of
          absolute value less than 2^(-w) where w is the working precision (two
          instances of theta may represent different values), cf Higham's book.
       */
 
-      /* to ensure that u = a + k is exact, we require that ulp(u) <= 1 */
-      if (MPFR_GET_EXP(a) > w)
-        mpfr_set_prec (u, MPFR_GET_EXP(u));
+      /* to ensure that u = a + k is exact, we have three cases:
+         (1) EXP(a) <= 0, then we need PREC(u) >= 1 - EXP(a) + PREC(a)
+         (2) EXP(a) - PREC(a) <= 0 < E(a), then PREC(u) >= PREC(a)
+         (3) 0 < EXP(a) - PREC(a), then PREC(u) >= EXP(a) */
+      precu = MPFR_GET_EXP(a) <= 0 ?
+        MPFR_ADD_PREC (MPFR_PREC(a), 1 - MPFR_EXP(a))
+        : (MPFR_EXP(a) <= MPFR_PREC(a)) ? MPFR_PREC(a) : MPFR_EXP(a);
+      MPFR_ASSERTN (precu + 1 <= MPFR_PREC_MAX);
+      mpfr_set_prec (u, precu + 1);
+      expu = (MPFR_EXP(a) > 0) ? MPFR_EXP(a) : 1;
 
       /* estimate Taylor series */
-      mpfr_ui_div (t, 1, a, MPFR_RNDZ); /* t = 1/a * (1 + theta) */
-      mpfr_set (s, t, MPFR_RNDZ);       /* s = 1/a * (1 + theta) */
+      mpfr_ui_div (t, 1, a, MPFR_RNDA); /* t = 1/a * (1 + theta) */
+      mpfr_set (s, t, MPFR_RNDA);       /* s = 1/a * (1 + theta) */
+      if (MPFR_IS_NEG(a))
+        {
+          mpfr_init2 (s_abs, 32);
+          mpfr_abs (s_abs, s, MPFR_RNDU);
+        }
       for (k = 1;; k++)
         {
-          mpfr_mul (t, t, x, MPFR_RNDZ); /* t = x^k/(a * ... * (a+k-1))
+          mpfr_mul (t, t, x, MPFR_RNDU); /* t = x^k/(a * ... * (a+k-1))
                                           * (1 + theta)^(2k) */
           inex = mpfr_add_ui (u, a, k, MPFR_RNDZ); /* u = a+k exactly */
           MPFR_ASSERTD(inex == 0);
-          mpfr_div (t, t, u, MPFR_RNDZ); /* t = x^k/(a * ... * (a+k))
+          mpfr_div (t, t, u, MPFR_RNDA); /* t = x^k/(a * ... * (a+k))
                                           * (1 + theta)^(2k+1) */
           mpfr_add (s, s, t, MPFR_RNDZ);
-          /* we stop when |t| < ulp(s) and |x/u| < 1/2, which ensures
+          if (MPFR_IS_NEG(a))
+            {
+              if (MPFR_IS_POS(t))
+                mpfr_add (s_abs, s_abs, t, MPFR_RNDU);
+              else
+                mpfr_sub (s_abs, s_abs, t, MPFR_RNDU);
+            }
+          /* we stop when |t| < ulp(s), u > 0 and |x/u| < 1/2, which ensures
              that the tail is at most 2*ulp(s) */
-          if (MPFR_GET_EXP(t) + w <= MPFR_GET_EXP(s) &&
+          if (MPFR_GET_EXP(t) + w <= MPFR_GET_EXP(s) && MPFR_IS_POS(u) &&
               MPFR_GET_EXP(x) + 1 < MPFR_GET_EXP(u))
             break;
+
+          /* if there was an exponent shift in u, increase the precision of
+             u so that mpfr_add_ui (u, a, k) remains exact */
+          if (MPFR_EXP(u) > expu) /* exponent shift in u */
+            {
+              MPFR_ASSERTN(MPFR_EXP(u) == expu + 1);
+              expu = MPFR_EXP(u);
+              mpfr_set_prec (u, mpfr_get_prec (u) + 1);
+            }
         }
-      /* since all terms are positive, we have s = S * (1 + theta)^(2k+3)
-         with S being the infinite Taylor series */
+      if (MPFR_IS_NEG(a))
+        {
+          decay = MPFR_GET_EXP(s_abs) - MPFR_GET_EXP(s);
+          mpfr_clear (s_abs);
+        }
+      /* For a > 0, since all terms are positive, we have
+         s = S * (1 + theta)^(2k+3) with S being the infinite Taylor series.
+         For a < 0, the error is bounded by that on the sum s_abs of absolute
+         values of the terms, i.e., S_abs * [(1 + theta)^(2k+3) - 1]. Thus we
+         can simply use the same error analysis as for a > 0, adding an error
+         corresponding to the decay of exponent between s_abs and s. */
 
       /* multiply by exp(-x) */
       mpfr_exp (t, x, MPFR_RNDZ);    /* t = exp(x) * (1+theta) */
@@ -215,23 +277,26 @@ mpfr_gamma_inc (mpfr_ptr y, mpfr_srcptr a, mpfr_srcptr x, mpfr_rnd_t rnd)
          For |u| < 0.58 we have |exp(u)-1| < 1.36*|u|
          thus |(1+theta)^(2k+7) - 1| < 1.36*0.58*(2k+7)/2^w < 0.79*(2k+7)/2^w.
          Since one ulp is at worst a relative error of 2^(1-w),
-         the error on s is at most 2*(2k+7) ulps. */
+         the error on s is at most 2^(decay+1)*(2k+7) ulps. */
 
       /* subtract from gamma(a) */
       mpfr_gamma (t, a, MPFR_RNDZ);  /* t = gamma(a) * (1+theta) */
       e0 = MPFR_GET_EXP (t);
-      e1 = MPFR_GET_EXP (s);
+      e1 = (MPFR_IS_ZERO(s)) ? __gmpfr_emin : MPFR_GET_EXP (s);
       mpfr_sub (s, t, s, MPFR_RNDZ);
       e2 = MPFR_GET_EXP (s);
       /* the final error is at most 1 ulp (for the final subtraction)
-         + 1 ulp * 2^(e0-e2) # for the error in t
-         + 2*(2k+7) ulps * 2^(e1-e2) # for the error in gamma(a,x) */
+         + 2^(e0-e2) ulps # for the error in t
+         + 2^(decay+1)*(2k+7) ulps * 2^(e1-e2) # for the error in gamma(a,x) */
 
-      e1 += 1 + MPFR_INT_CEIL_LOG2 (2*k+7);
+      e1 += decay + 1 + MPFR_INT_CEIL_LOG2 (2*k+7);
       /* Now the error is <= 1 + 2^(e0-e2) + 2^(e1-e2).
-         Assume e0 > e1, then it is <= 1 + 1.5*2^(e0-e2)
-                                    <= 2^(e0-e2+1) if e0 > e2
-                                    <= 2^2 otherwise */
+         Since the formula is symmetric in e0 and e1, we can assume without
+         loss of generality e0 >= e1, then:
+         if e0 = e1: err <= 1 + 2*2^(e0-e2) <= 2^(e0-e2+2)
+         if e0 > e1: err <= 1 + 1.5*2^(e0-e2)
+                         <= 2^(e0-e2+1) if e0 > e2
+                         <= 2^2 otherwise */
       if (e0 == e1)
         err = e0 - e2 + 2;
       else

@@ -1,7 +1,7 @@
 /* Sum -- efficiently sum a list of floating-point numbers
 
 Copyright 2014-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -63,7 +63,7 @@ VL: This is very different:
 */
 
 #ifdef MPFR_COV_CHECK
-int __gmpfr_cov_sum_tmd[MPFR_RND_MAX][2][2][3][2] = { 0 };
+int __gmpfr_cov_sum_tmd[MPFR_RND_MAX][2][2][3][2][2] = { 0 };
 #endif
 
 /* Update minexp after detecting a potential integer overflow in extreme
@@ -940,7 +940,7 @@ sum_aux (mpfr_ptr sum, mpfr_ptr *const x, unsigned long n, mpfr_rnd_t rnd,
 
         /* Do not consider the corrected sst for MPFR_COV_SET */
         MPFR_COV_SET (sum_tmd[(int) rnd][tmd-1][rbit]
-                      [cancel == 0 ? 1 : sst+1][pos]);
+                      [cancel == 0 ? 1 : sst+1][pos][sq > MPFR_PREC_MIN]);
 
         inex =
           MPFR_IS_LIKE_RNDD (rnd, pos ? 1 : -1) ? (sst ? -1 : 0) :

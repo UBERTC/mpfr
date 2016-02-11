@@ -1,5 +1,5 @@
 Copyright 2000-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -24,6 +24,8 @@ Changes from versions 3.1.* to version 3.2.0:
 - The "dinde aux marrons" release.
 - MPFR now depends on GMP 5.0+ instead of 4.1+.
 - Mini-gmp support via the --enable-mini-gmp configure option (experimental).
+- The minimum precision MPFR_PREC_MIN is now 1, with rounding defined as
+  in the next IEEE 754 revision (ties rounded away from zero).
 - New functions: mpfr_fpif_export and mpfr_fpif_import to export and import
   numbers in a floating-point interchange format, independent both on the
   number of bits per word and on the endianness.
@@ -43,6 +45,8 @@ Changes from versions 3.1.* to version 3.2.0:
 - New functions mpfr_fmma and mpfr_fmms to compute a*b+c*d and a*b-c*d.
 - New functions mpfr_log_ui to compute the logarithm of an integer,
   and mpfr_gamma_inc for the incomplete Gamma function.
+- The mpfr_eint function now returns the value of the E1/eint1 function
+  for negative argument.
 - The behavior of the mpfr_set_exp function changed, as it could easily
   yield undefined behavior in some cases (this modifies both the API and
   the ABI).

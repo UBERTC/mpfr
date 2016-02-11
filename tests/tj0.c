@@ -1,7 +1,7 @@
 /* tj0 -- test file for the Bessel function of first kind (order 0)
 
 Copyright 2007-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -134,7 +134,7 @@ main (int argc, char *argv[])
   mpfr_clear (x);
   mpfr_clear (y);
 
-  test_generic (2, 100, 10);
+  test_generic (MPFR_PREC_MIN, 100, 10);
 
   data_check ("data/j0", mpfr_j0, "mpfr_j0");
 

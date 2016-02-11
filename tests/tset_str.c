@@ -1,7 +1,7 @@
 /* Test file for mpfr_set_str.
 
 Copyright 1999, 2001-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -64,7 +64,7 @@ check_underflow (void)
 
   /* check overflow */
   emax = mpfr_get_emax ();
-  set_emax (1073741823); /* 2^30-1 */
+  set_emax (1073741821); /* 2^30-3 */
   mpfr_set_str (a, "2E1000000000", 10, MPFR_RNDN);
   if (!mpfr_inf_p (a) || mpfr_sgn (a) < 0)
     {

@@ -1,7 +1,7 @@
 /* Utilities for MPFR developers, not exported.
 
 Copyright 1999-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -825,17 +825,18 @@ typedef intmax_t mpfr_eexp_t;
 
 /* Definition of the exponent limits for MPFR numbers.
  * These limits are chosen so that if e is such an exponent, then 2e-1 and
- * 2e+1 are representable. This is useful for intermediate computations,
- * in particular the multiplication.
+ * 2e+1 are valid exponents. This is useful for intermediate computations,
+ * in particular the multiplication. We must have MPFR_EMIN_MIN >= 3-2^(n-2)
+ * = 3-MPFR_EXP_INVALID so that 2*MPFR_EMIN_MIN-1 > __MPFR_EXP_INF = 3-2^(n-1).
  */
 #undef MPFR_EMIN_MIN
 #undef MPFR_EMIN_MAX
 #undef MPFR_EMAX_MIN
 #undef MPFR_EMAX_MAX
-#define MPFR_EMIN_MIN (1-MPFR_EXP_INVALID)
-#define MPFR_EMIN_MAX (MPFR_EXP_INVALID-1)
-#define MPFR_EMAX_MIN (1-MPFR_EXP_INVALID)
-#define MPFR_EMAX_MAX (MPFR_EXP_INVALID-1)
+#define MPFR_EMIN_MIN (3-MPFR_EXP_INVALID)
+#define MPFR_EMIN_MAX (MPFR_EXP_INVALID-3)
+#define MPFR_EMAX_MIN (3-MPFR_EXP_INVALID)
+#define MPFR_EMAX_MAX (MPFR_EXP_INVALID-3)
 
 /* Use MPFR_GET_EXP and MPFR_SET_EXP instead of MPFR_EXP directly,
    unless when the exponent may be out-of-range, for instance when
@@ -886,8 +887,11 @@ typedef intmax_t mpfr_eexp_t;
 
 #define MPFR_IS_FP(x)       (!MPFR_IS_NAN(x) && !MPFR_IS_INF(x))
 #define MPFR_IS_SINGULAR(x) (MPFR_EXP(x) <= MPFR_EXP_INF)
-#define MPFR_IS_PURE_FP(x) \
-  (!MPFR_IS_SINGULAR(x) && (MPFR_ASSERTD (MPFR_IS_NORMALIZED (x)), 1))
+#define MPFR_IS_PURE_FP(x)                          \
+  (!MPFR_IS_SINGULAR(x) &&                          \
+   (MPFR_ASSERTD (MPFR_EXP (x) >= MPFR_EMIN_MIN &&  \
+                  MPFR_EXP (x) <= MPFR_EMAX_MAX &&  \
+                  MPFR_IS_NORMALIZED (x)), 1))
 
 #define MPFR_ARE_SINGULAR(x,y) \
   (MPFR_UNLIKELY(MPFR_IS_SINGULAR(x)) || MPFR_UNLIKELY(MPFR_IS_SINGULAR(y)))
@@ -982,7 +986,7 @@ typedef intmax_t mpfr_eexp_t;
    ((rnd) == MPFR_RNDZ && MPFR_IS_POS_SIGN (sign)) ||   \
    ((rnd) == MPFR_RNDA && MPFR_IS_NEG_SIGN (sign)))
 
-/* Invert a rounding mode, RNDZ and RNDA are unchanged */
+/* Invert a rounding mode, RNDN, RNDZ and RNDA are unchanged */
 #define MPFR_INVERT_RND(rnd) ((rnd) == MPFR_RNDU ? MPFR_RNDD :          \
                               (rnd) == MPFR_RNDD ? MPFR_RNDU : (rnd))
 
@@ -1073,6 +1077,12 @@ typedef union { mp_size_t s; mp_limb_t l; } mpfr_size_limb_t;
  ( MPFR_PREC(d) = MPFR_PREC(s),                                      \
    MPFR_MANT(d) = MPFR_MANT(s),                                      \
    MPFR_SET_POS(d),                                                  \
+   MPFR_EXP(d)  = MPFR_EXP(s))
+
+#define MPFR_TMP_INIT_NEG(d, s)                                      \
+ ( MPFR_PREC(d) = MPFR_PREC(s),                                      \
+   MPFR_MANT(d) = MPFR_MANT(s),                                      \
+   MPFR_SET_OPPOSITE_SIGN(d,s),                                      \
    MPFR_EXP(d)  = MPFR_EXP(s))
 
 
@@ -2155,7 +2165,7 @@ __MPFR_DECLSPEC void mpfr_mpz_clear _MPFR_PROTO((mpz_ptr));
 extern "C" {
 #endif
 
-__MPFR_DECLSPEC extern int __gmpfr_cov_sum_tmd[MPFR_RND_MAX][2][2][3][2];
+__MPFR_DECLSPEC extern int __gmpfr_cov_sum_tmd[MPFR_RND_MAX][2][2][3][2][2];
 
 #if defined (__cplusplus)
 }

@@ -1,7 +1,7 @@
 /* Test file for mpfr_asinh.
 
 Copyright 2001-2004, 2006-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -147,7 +147,7 @@ main (int argc, char *argv[])
 
   special ();
 
-  test_generic (2, 100, 25);
+  test_generic (MPFR_PREC_MIN, 100, 25);
 
   data_check ("data/asinh", mpfr_asinh, "mpfr_asinh");
   bad_cases (mpfr_asinh, mpfr_sinh, "mpfr_asinh", 256, -128, 29,

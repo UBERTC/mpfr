@@ -1,7 +1,7 @@
 /* mpfr_tlgamma -- test file for lgamma function
 
 Copyright 2005-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -391,7 +391,7 @@ main (void)
   tests_start_mpfr ();
 
   special ();
-  test_generic (2, 100, 2);
+  test_generic (MPFR_PREC_MIN, 100, 2);
 
   data_check ("data/lgamma", mpfr_lgamma1, "mpfr_lgamma");
 

@@ -1,7 +1,7 @@
 /* ty1 -- test file for the Bessel function of second kind (order 1)
 
 Copyright 2007-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -86,7 +86,7 @@ main (int argc, char *argv[])
   mpfr_clear (x);
   mpfr_clear (y);
 
-  test_generic (2, 100, 1);
+  test_generic (MPFR_PREC_MIN, 100, 1);
 
   data_check ("data/y1", mpfr_y1, "mpfr_y1");
 

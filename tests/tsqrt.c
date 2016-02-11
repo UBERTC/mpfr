@@ -1,7 +1,7 @@
 /* Test file for mpfr_sqrt.
 
 Copyright 1999, 2001-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -320,7 +320,7 @@ special (void)
 
   /* case prec(result) << prec(input) */
   mpfr_set_prec (z, 2);
-  for (p = 2; p < 1000; p++)
+  for (p = mpfr_get_prec (z); p < 1000; p++)
     {
       mpfr_set_prec (x, p);
       mpfr_set_ui (x, 1, MPFR_RNDN);
@@ -728,7 +728,7 @@ main (void)
   check4 ("72154663483843080704304789585920.0", MPFR_RNDA,
           "1.e2d9a51977e6e@13");
 
-  test_generic (2, 300, 15);
+  test_generic (MPFR_PREC_MIN, 300, 15);
   data_check ("data/sqrt", mpfr_sqrt, "mpfr_sqrt");
   bad_cases (mpfr_sqrt, mpfr_sqr, "mpfr_sqrt", 8, -256, 255, 4, 128, 800, 50);
 

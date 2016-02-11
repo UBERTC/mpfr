@@ -1,7 +1,7 @@
 /* tsum -- test file for the list summation function
 
 Copyright 2004-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -337,21 +337,34 @@ check_more_special (void)
   mpfr_clear (sum);
 }
 
-/* i * 2^46 + j * 2^45 + k * 2^44 + f * 2^(-2),
-   with -1 <= i, j, k <= 1, i != 0, -3 <= f <= 3,
-   ulp(exact sum) = 2^0 and ulp(exact sum) = 2^44. */
+/* i * 2^(46+h) + j * 2^(45+h) + k * 2^(44+h) + f * 2^(-2),
+   with -1 <= i, j, k <= 1, i != 0, -3 <= f <= 3, and
+   * prec set up so that ulp(exact sum) = 2^0, then
+   * prec set up so that ulp(exact sum) = 2^(44+h) when possible,
+     i.e. when prec >= MPFR_PREC_MIN.
+   ------
+   Some explanations:
+   ulp(exact sum) = 2^q means EXP(exact sum) - prec = q where prec is
+   the precision of the output. Thus ulp(exact sum) = 2^0 is achieved
+   by setting prec = EXP(s3), where s3 is the exact sum (computed with
+   mpfr_add's and sufficient precision). Then ulp(exact sum) = 2^(44+h)
+   is achieved by subtracting 44+h from prec. The loop on prec does
+   this. Since EXP(s3) <= 47+h, prec <= 3 at the second iteration,
+   thus there will be at most 2 iterations. Whether a second iteration
+   is done or not depends on EXP(s3), i.e. the values of the parameters,
+   and the value of MPFR_PREC_MIN. */
 static void
-check1 (void)
+check1 (int h)
 {
   mpfr_t sum1, sum2, s1, s2, s3, t[4];
   mpfr_ptr p[4];
   int i, j, k, f, prec, r, inex1, inex2;
 
-  mpfr_init2 (sum1, 47);
-  mpfr_init2 (sum2, 47);
+  mpfr_init2 (sum1, 47 + h);
+  mpfr_init2 (sum2, 47 + h);
   mpfr_init2 (s1, 3);
   mpfr_init2 (s2, 3);
-  mpfr_init2 (s3, 49);
+  mpfr_init2 (s3, 49 + h);
   for (i = 0; i < 4; i++)
     {
       mpfr_init2 (t[i], 2);
@@ -360,15 +373,15 @@ check1 (void)
 
   for (i = -1; i <= 1; i += 2)
     {
-      mpfr_set_si_2exp (t[0], i, 46, MPFR_RNDN);
+      mpfr_set_si_2exp (t[0], i, 46 + h, MPFR_RNDN);
       for (j = -1; j <= 1; j++)
         {
-          mpfr_set_si_2exp (t[1], j, 45, MPFR_RNDN);
+          mpfr_set_si_2exp (t[1], j, 45 + h, MPFR_RNDN);
           inex1 = mpfr_add (s1, t[0], t[1], MPFR_RNDN);
           MPFR_ASSERTN (inex1 == 0);
           for (k = -1; k <= 1; k++)
             {
-              mpfr_set_si_2exp (t[2], k, 44, MPFR_RNDN);
+              mpfr_set_si_2exp (t[2], k, 44 + h, MPFR_RNDN);
               inex1 = mpfr_add (s2, s1, t[2], MPFR_RNDN);
               MPFR_ASSERTN (inex1 == 0);
               for (f = -3; f <= 3; f++)
@@ -378,7 +391,7 @@ check1 (void)
                   MPFR_ASSERTN (inex1 == 0);
                   for (prec = mpfr_get_exp (s3);
                        prec >= MPFR_PREC_MIN;
-                       prec -= 44)
+                       prec -= 44 + h)
                     {
                       mpfr_set_prec (sum1, prec);
                       mpfr_set_prec (sum2, prec);
@@ -392,9 +405,10 @@ check1 (void)
                                 SAME_SIGN (inex1, inex2)))
                             {
                               printf ("Error in check1 on %s, prec = %d, "
-                                      "i = %d, j = %d, k = %d, f = %d\n",
+                                      "i = %d, j = %d, k = %d, f = %d, "
+                                      "h = %d\n",
                                       mpfr_print_rnd_mode ((mpfr_rnd_t) r),
-                                      prec, i, j, k, f);
+                                      prec, i, j, k, f, h);
                               printf ("Expected ");
                               mpfr_dump (sum1);
                               printf ("with inex = %d\n", inex1);
@@ -1081,7 +1095,7 @@ static void
 check_coverage (void)
 {
 #ifdef MPFR_COV_CHECK
-  int r, i, j, k, p;
+  int r, i, j, k, p, q;
   int err = 0;
 
   for (r = 0; r < MPFR_RND_MAX; r++)
@@ -1089,13 +1103,15 @@ check_coverage (void)
       for (j = 0; j < 2; j++)
         for (k = 0; k < 3; k++)
           for (p = 0; p < 2; p++)
-            if (!__gmpfr_cov_sum_tmd[r][i][j][k][p])
-              {
-                printf ("TMD not tested on %s, tmd=%d, rbit=%d, sst=%d, %s\n",
-                        mpfr_print_rnd_mode ((mpfr_rnd_t) r), i+1, j, k-1,
-                        p ? "positive" : "negative");
-                err = 1;
-              }
+            for (q = 0; q < 2; q++)
+              if (!__gmpfr_cov_sum_tmd[r][i][j][k][p][q])
+                {
+                  printf ("TMD not tested on %s, tmd=%d, rbit=%d, sst=%d,"
+                          " %s, sq %s MPFR_PREC_MIN\n",
+                          mpfr_print_rnd_mode ((mpfr_rnd_t) r), i+1, j, k-1,
+                          p ? "pos" : "neg", q ? ">" : "==");
+                  err = 1;
+                }
 
   if (err)
     exit (1);
@@ -1169,6 +1185,8 @@ check_random (int n, int k, mpfr_prec_t prec, mpfr_rnd_t rnd)
 int
 main (int argc, char *argv[])
 {
+  int h;
+
   if (argc == 5)
     {
       check_random (atoi (argv[1]), atoi (argv[2]), atoi (argv[3]),
@@ -1187,7 +1205,8 @@ main (int argc, char *argv[])
   check_simple ();
   check_special ();
   check_more_special ();
-  check1 ();
+  for (h = 0; h <= 64; h++)
+    check1 (h);
   check2 ();
   check3 ();
   check4 ();

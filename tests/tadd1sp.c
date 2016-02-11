@@ -1,7 +1,7 @@
 /* Test file for mpfr_add1sp.
 
 Copyright 2004-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -62,7 +62,7 @@ main (void)
   tests_start_mpfr ();
 
   check_special ();
-  for(p = 2 ; p < 200 ; p++)
+  for(p = MPFR_PREC_MIN; p < 200 ; p++)
     check_random (p);
   check_overflow ();
 

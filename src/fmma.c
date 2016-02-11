@@ -1,7 +1,7 @@
 /* mpfr_fmma, mpfr_fmms -- Compute a*b +/- c*d
 
 Copyright 2014-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -53,7 +53,6 @@ mpfr_fmma_fast (mpfr_ptr z, mpfr_srcptr a, mpfr_srcptr b, mpfr_srcptr c,
    mpfr_t u, v;
    mp_size_t an, bn, cn, dn;
    mpfr_limb_ptr up, vp;
-   unsigned int saved_flags = __gmpfr_flags;
    MPFR_TMP_DECL(marker);
    MPFR_SAVE_EXPO_DECL (expo);
 
@@ -76,12 +75,16 @@ mpfr_fmma_fast (mpfr_ptr z, mpfr_srcptr a, mpfr_srcptr b, mpfr_srcptr c,
    if ((up[an + bn - 1] & MPFR_LIMB_HIGHBIT) == 0)
      {
        mpn_lshift (up, up, an + bn, 1);
-       MPFR_SET_EXP (u, MPFR_EXP(a) + MPFR_EXP(b) - 1);
-       if (MPFR_UNLIKELY(MPFR_EXP(u) == __MPFR_EXP_INF))
-         goto failure;
+       /* EXP(a) and EXP(b) are in [1-2^(n-2), 2^(n-2)-1] where
+          mpfr_exp_t has is n-bit wide, thus EXP(a)+EXP(b) is in
+          [2-2^(n-1), 2^(n-1)-2]. We use the fact here that 2*MPFR_EMIN_MIN-1
+          is a valid exponent (see mpfr-impl.h). However we don't use
+          MPFR_SET_EXP() which only allows the restricted exponent range
+          [1-2^(n-2), 2^(n-2)-1]. */
+       MPFR_EXP(u) = MPFR_EXP(a) + MPFR_EXP(b) - 1;
      }
    else
-     MPFR_SET_EXP (u, MPFR_EXP(a) + MPFR_EXP(b));
+     MPFR_EXP(u) = MPFR_EXP(a) + MPFR_EXP(b);
 
    /* v <- c*d */
    if (cn >= dn)
@@ -91,12 +94,10 @@ mpfr_fmma_fast (mpfr_ptr z, mpfr_srcptr a, mpfr_srcptr b, mpfr_srcptr c,
    if ((vp[cn + dn - 1] & MPFR_LIMB_HIGHBIT) == 0)
      {
        mpn_lshift (vp, vp, cn + dn, 1);
-       MPFR_SET_EXP (v, MPFR_EXP(c) + MPFR_EXP(d) - 1);
-       if (MPFR_UNLIKELY(MPFR_EXP(v) == __MPFR_EXP_INF))
-         goto failure;
+       MPFR_EXP(v) = MPFR_EXP(c) + MPFR_EXP(d) - 1;
      }
    else
-     MPFR_SET_EXP (v, MPFR_EXP(c) + MPFR_EXP(d));
+     MPFR_EXP(v) = MPFR_EXP(c) + MPFR_EXP(d);
 
    MPFR_PREC(u) = (an + bn) * GMP_NUMB_BITS;
    MPFR_PREC(v) = (cn + dn) * GMP_NUMB_BITS;
@@ -112,12 +113,6 @@ mpfr_fmma_fast (mpfr_ptr z, mpfr_srcptr a, mpfr_srcptr b, mpfr_srcptr c,
    MPFR_SAVE_EXPO_FREE (expo);
 
    return mpfr_check_range (z, inex, rnd);
-
- failure:
-   __gmpfr_flags = saved_flags;
-   MPFR_TMP_FREE(marker);
-   MPFR_SAVE_EXPO_FREE (expo);
-   return mpfr_fmma_slow (z, a, b, c, d, rnd);
 }
 
 /* z <- a*b + c*d */

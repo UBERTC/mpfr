@@ -1,7 +1,7 @@
 /* Test file for mpfr_mul_ui.
 
 Copyright 1999-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -42,7 +42,7 @@ check_inexact (mpfr_prec_t p)
       exit (1);
     }
 
-  for (q = 2; q <= p; q++)
+  for (q = MPFR_PREC_MIN; q <= p; q++)
     for (rnd = 0; rnd < MPFR_RND_MAX; rnd++)
       {
         mpfr_set_prec (y, q);
@@ -279,7 +279,7 @@ main (int argc, char *argv[])
   mpfr_clear(x);
   mpfr_clear(y);
 
-  test_generic (2, 500, 100);
+  test_generic (MPFR_PREC_MIN, 500, 100);
 
   tests_end_mpfr ();
   return 0;

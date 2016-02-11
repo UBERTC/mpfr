@@ -2,7 +2,7 @@
    mpfr_rint_trunc, mpfr_rint_floor, mpfr_rint_ceil, mpfr_rint_round.
 
 Copyright 2002-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -263,7 +263,7 @@ basic_tests (void)
   emax = mpfr_get_emax ();
 
   mpfr_init2 (x, 16);
-  for (prec = 2; prec <= 7; prec++)
+  for (prec = MPFR_PREC_MIN; prec <= 7; prec++)
     {
       mpfr_inits2 (prec, y, z, (mpfr_ptr) 0);
       for (s = 1; s >= -1; s -= 2)
@@ -494,27 +494,31 @@ main (int argc, char *argv[])
   mpfr_init (u);
   mpfr_init (v);
   mpz_set_ui (z, 1);
-  for (s = 2; s < 100; s++)
+  /* the code below works for 1 <= MPFR_PREC_MIN <= 2 */
+  MPFR_ASSERTN(1 <= MPFR_PREC_MIN && MPFR_PREC_MIN <= 2);
+  for (s = MPFR_PREC_MIN; s < 100; s++)
     {
-      /* z has exactly s bits */
-
-      mpz_mul_2exp (z, z, 1);
-      if (randlimb () % 2)
-        mpz_add_ui (z, z, 1);
+      if (s > 1)
+        {
+          mpz_mul_2exp (z, z, 1);
+          if (randlimb () % 2)
+            mpz_add_ui (z, z, 1);
+        }
+      /* now 2^(s-1) <= z < 2^s */
       mpfr_set_prec (x, s);
       mpfr_set_prec (t, s);
       mpfr_set_prec (u, s);
       if (mpfr_set_z (x, z, MPFR_RNDN))
         {
-          printf ("Error: mpfr_set_z should be exact (s = %u)\n",
-                  (unsigned int) s);
+          gmp_printf ("Error: mpfr_set_z should be exact (z = %Zd, s = %u)\n",
+                      z, (unsigned int) s);
           exit (1);
         }
       if (randlimb () % 2)
         mpfr_neg (x, x, MPFR_RNDN);
       if (randlimb () % 2)
         mpfr_div_2ui (x, x, randlimb () % s, MPFR_RNDN);
-      for (p = 2; p < 100; p++)
+      for (p = MPFR_PREC_MIN; p < 100; p++)
         {
           int trint;
           mpfr_set_prec (y, p);
@@ -605,18 +609,22 @@ main (int argc, char *argv[])
                           err ("halfway case for mpfr_rint, result isn't "
                                "an even integer", s, x, y, p,
                                (mpfr_rnd_t) r, trint, inexact);
-                        /* If floor(x) and ceil(x) aren't both representable
-                           integers, the significand must be even. */
-                        mpfr_sub (v, v, y, MPFR_RNDN);
-                        mpfr_abs (v, v, MPFR_RNDN);
-                        if (mpfr_cmp_ui (v, 1) != 0)
+                        if (p > 1)
                           {
-                            mpfr_div_2si (y, y, MPFR_EXP (y) - MPFR_PREC (y)
-                                          + 1, MPFR_RNDN);
-                            if (!mpfr_integer_p (y))
-                              err ("halfway case for mpfr_rint, "
-                                   "significand isn't even", s, x, y, p,
-                                   (mpfr_rnd_t) r, trint, inexact);
+                            /* For p > 1, if floor(x) and ceil(x) aren't
+                               both representable integers, the significand
+                               must be even. */
+                            mpfr_sub (v, v, y, MPFR_RNDN);
+                            mpfr_abs (v, v, MPFR_RNDN);
+                            if (mpfr_cmp_ui (v, 1) != 0)
+                              {
+                                mpfr_div_2si (y, y, MPFR_EXP (y) -
+                                              MPFR_PREC (y) + 1, MPFR_RNDN);
+                                if (!mpfr_integer_p (y))
+                                  err ("halfway case for mpfr_rint, "
+                                       "significand isn't even", s, x, y, p,
+                                       (mpfr_rnd_t) r, trint, inexact);
+                              }
                           }
                       }
                     else if (trint == 3)
@@ -643,11 +651,11 @@ main (int argc, char *argv[])
   basic_tests ();
   coverage_03032011 ();
 
-  test_generic_trunc (2, 300, 20);
-  test_generic_floor (2, 300, 20);
-  test_generic_ceil (2, 300, 20);
-  test_generic_round (2, 300, 20);
-  test_generic_roundeven (2, 300, 20);
+  test_generic_trunc (MPFR_PREC_MIN, 300, 20);
+  test_generic_floor (MPFR_PREC_MIN, 300, 20);
+  test_generic_ceil (MPFR_PREC_MIN, 300, 20);
+  test_generic_round (MPFR_PREC_MIN, 300, 20);
+  test_generic_roundeven (MPFR_PREC_MIN, 300, 20);
 
 #if __MPFR_STDC (199901L)
   if (argc > 1 && strcmp (argv[1], "-s") == 0)

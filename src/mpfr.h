@@ -1,7 +1,7 @@
 /* mpfr.h -- Include file for mpfr.
 
 Copyright 1999-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -159,7 +159,7 @@ typedef unsigned long  mpfr_uprec_t;
    also make sure that MPFR_PREC_MIN and MPFR_PREC_MAX have a signed
    integer type. The "- 256" allows more security, avoiding some
    integer overflows in extreme cases; ideally it should be useless. */
-#define MPFR_PREC_MIN 2
+#define MPFR_PREC_MIN 1
 #define MPFR_PREC_MAX ((mpfr_prec_t) ((((mpfr_uprec_t) -1) >> 1) - 256))
 
 /* Definition of sign */
@@ -187,7 +187,7 @@ typedef uintmax_t mpfr_uexp_t;
 #endif
 
 /* Definition of the standard exponent limits */
-#define MPFR_EMAX_DEFAULT ((mpfr_exp_t) (((mpfr_ulong) 1 << 30) - 1))
+#define MPFR_EMAX_DEFAULT ((mpfr_exp_t) (((mpfr_ulong) 1 << 30) - 3))
 #define MPFR_EMIN_DEFAULT (-(MPFR_EMAX_DEFAULT))
 
 /* DON'T USE THIS! (For MPFR-public macros only, see below.)

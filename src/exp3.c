@@ -1,7 +1,7 @@
 /* mpfr_exp -- exponential of a floating-point number
 
 Copyright 1999, 2001-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -287,8 +287,8 @@ mpfr_exp_3 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
             }
         }
 
-      if (mpfr_can_round (shift_x > 0 ? t : tmp, realprec, MPFR_RNDN, MPFR_RNDZ,
-                          MPFR_PREC(y) + (rnd_mode == MPFR_RNDN)))
+      if (MPFR_CAN_ROUND (shift_x > 0 ? t : tmp, realprec,
+                          MPFR_PREC(y), rnd_mode))
         {
           inexact = mpfr_set (y, shift_x > 0 ? t : tmp, rnd_mode);
           if (MPFR_UNLIKELY (scaled && MPFR_IS_PURE_FP (y)))

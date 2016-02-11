@@ -1,7 +1,7 @@
 /* mpfr_tli2 -- test file for dilogarithm function
 
 Copyright 2007-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -183,7 +183,7 @@ main (int argc, char *argv[])
 
   normal ();
 
-  test_generic (2, 100, 2);
+  test_generic (MPFR_PREC_MIN, 100, 2);
 
   data_check ("data/li2", mpfr_li2, "mpfr_li2");
 

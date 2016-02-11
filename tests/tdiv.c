@@ -1,7 +1,7 @@
 /* Test file for mpfr_div (and some mpfr_div_ui, etc. tests).
 
 Copyright 1999, 2001-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -1330,7 +1330,7 @@ main (int argc, char *argv[])
   test_20070603 ();
   test_20070628 ();
   test_20151023 ();
-  test_generic (2, 800, 50);
+  test_generic (MPFR_PREC_MIN, 800, 50);
   test_bad ();
   test_extreme ();
 

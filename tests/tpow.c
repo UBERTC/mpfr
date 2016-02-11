@@ -1,7 +1,7 @@
 /* Test file for mpfr_pow, mpfr_pow_ui and mpfr_pow_si.
 
 Copyright 2000-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -53,7 +53,7 @@ test_pow (mpfr_ptr a, mpfr_srcptr b, mpfr_srcptr c, mpfr_rnd_t rnd_mode)
 
 #define TEST_FUNCTION test_pow
 #define TWO_ARGS
-#define TEST_RANDOM_POS 16
+#define TEST_RANDOM_POS 16 /* the 2nd argument is negative with prob. 16/512 */
 #define TGENERIC_NOWARNING 1
 #include "tgeneric.c"
 
@@ -422,7 +422,7 @@ check_inexact (mpfr_prec_t p)
   mpfr_init (t);
   mpfr_urandomb (x, RANDS);
   u = randlimb () % 2;
-  for (q = 2; q <= p; q++)
+  for (q = MPFR_PREC_MIN; q <= p; q++)
     for (rnd = 0; rnd < MPFR_RND_MAX; rnd++)
       {
         mpfr_set_prec (y, q);
@@ -1391,7 +1391,13 @@ bug20071218 (void)
 {
   mpfr_t x, y, z, t;
   int tern;
+  mpfr_exp_t emin;
 
+  if (mpfr_get_emin_min () > -1073741823)
+    return;
+
+  emin = mpfr_get_emin ();
+  mpfr_set_emin (-1073741823);
   mpfr_inits2 (64, x, y, z, t, (mpfr_ptr) 0);
   mpfr_set_str (x, "0x.80000000000002P-1023", 0, MPFR_RNDN);
   mpfr_set_str (y, "100000.000000002", 16, MPFR_RNDN);
@@ -1427,6 +1433,7 @@ bug20071218 (void)
       exit (1);
     }
   mpfr_clears (x, y, z, t, (mpfr_ptr) 0);
+  mpfr_set_emin (emin);
 }
 
 /* With revision 5429, this gives:
@@ -1595,7 +1602,7 @@ main (int argc, char **argv)
   check_pow_si ();
   check_special_pow_si ();
   pow_si_long_min ();
-  for (p = 2; p < 100; p++)
+  for (p = MPFR_PREC_MIN; p < 100; p++)
     check_inexact (p);
   underflows ();
   overflows ();
@@ -1611,9 +1618,9 @@ main (int argc, char **argv)
   bug20110320 ();
   tst20140422 ();
 
-  test_generic (2, 100, 100);
-  test_generic_ui (2, 100, 100);
-  test_generic_si (2, 100, 100);
+  test_generic (MPFR_PREC_MIN, 100, 100);
+  test_generic_ui (MPFR_PREC_MIN, 100, 100);
+  test_generic_si (MPFR_PREC_MIN, 100, 100);
 
   data_check ("data/pow275", mpfr_pow275, "mpfr_pow275");
 

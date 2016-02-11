@@ -1,7 +1,7 @@
 /* Test file for mpfr_cot.
 
 Copyright 2005-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -134,7 +134,7 @@ main (int argc, char *argv[])
   two2emin (MPFR_EMAX_DEFAULT);
   if (MPFR_EMAX_MAX != MPFR_EMAX_DEFAULT)
     two2emin (MPFR_EMAX_MAX);
-  test_generic (2, 200, 5);
+  test_generic (MPFR_PREC_MIN, 200, 5);
 
   tests_end_mpfr ();
   return 0;

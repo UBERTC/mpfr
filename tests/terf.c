@@ -1,7 +1,7 @@
 /* Test file for mpfr_erf and mpfr_erfc.
 
 Copyright 2001-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -649,8 +649,8 @@ main (int argc, char *argv[])
   test_erfc ();
   reduced_expo_range ();
 
-  test_generic_erf (2, 100, 15);
-  test_generic_erfc (2, 100, 15);
+  test_generic_erf (MPFR_PREC_MIN, 100, 15);
+  test_generic_erfc (MPFR_PREC_MIN, 100, 15);
 
   data_check ("data/erf",  mpfr_erf,  "mpfr_erf");
   data_check ("data/erfc", mpfr_erfc, "mpfr_erfc");

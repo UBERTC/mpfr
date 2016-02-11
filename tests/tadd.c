@@ -1,7 +1,7 @@
 /* Test file for mpfr_add and mpfr_sub.
 
 Copyright 1999-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -680,11 +680,13 @@ check_1111 (void)
 
       prec_a = MPFR_PREC_MIN + (randlimb () % m);
       prec_b = MPFR_PREC_MIN + (randlimb () % m);
-      prec_c = MPFR_PREC_MIN + (randlimb () % m);
+      /* we need prec_c > 1 so that % (prec_c - 1) is well defined below */
+      do prec_c = MPFR_PREC_MIN + (randlimb () % m); while (prec_c == 1);
       mpfr_init2 (a, prec_a);
       mpfr_init2 (b, prec_b);
       mpfr_init2 (c, prec_c);
-      sb = randlimb () % 3;
+      /* we need prec_b - (sb != 2) > 0 below */
+      do sb = randlimb () % 3; while (prec_b - (sb != 2) == 0);
       if (sb != 0)
         {
           tb = 1 + (randlimb () % (prec_b - (sb != 2)));
@@ -1144,7 +1146,7 @@ main (int argc, char *argv[])
 
   check_extreme ();
 
-  test_generic (2, 1000, 100);
+  test_generic (MPFR_PREC_MIN, 1000, 100);
 
   tests_end_mpfr ();
   return 0;

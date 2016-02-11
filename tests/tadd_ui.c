@@ -1,7 +1,7 @@
 /* Test file for mpfr_add_ui
 
 Copyright 2000-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -108,7 +108,7 @@ main (int argc, char *argv[])
   check3 ("-2.0769715792901673e-5", 880524, MPFR_RNDN,
           "8.8052399997923023e5");
 
-  test_generic (2, 1000, 100);
+  test_generic (MPFR_PREC_MIN, 1000, 100);
 
   tests_end_mpfr ();
   return 0;

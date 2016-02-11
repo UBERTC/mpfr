@@ -1,7 +1,7 @@
 /* Test file for mpfr_sub1sp.
 
 Copyright 2003-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -33,7 +33,7 @@ main (void)
   tests_start_mpfr ();
 
   check_special ();
-  for (p = 2 ; p < 200 ; p++)
+  for (p = MPFR_PREC_MIN ; p < 200 ; p++)
     check_random (p);
 
   tests_end_mpfr ();
@@ -352,12 +352,19 @@ check_special (void)
 
       MPFR_SET_NAN(x);
       MPFR_SET_NAN(x2);
+#if 0
       mpfr_set_str_binary (y,
       "0.1000000000000000000000000000000000000000000000000000000000000000"
                           "E-1073741823");
       mpfr_set_str_binary (z,
       "0.1100000000000000000000000000000000000000000000000000000000000000"
                           "E-1073741823");
+#else
+      mpfr_set_ui_2exp (y, 1, MPFR_EMIN_DEFAULT-1, MPFR_RNDN);
+      /* y = 0.5*2^EMIN_DEFAULT */
+      mpfr_set_ui_2exp (z, 3, MPFR_EMIN_DEFAULT-2, MPFR_RNDN);
+      /* z = 0.75*2^EMIN_DEFAULT */
+#endif
       inexact1 = mpfr_sub1(x2, y, z, (mpfr_rnd_t) r);
       inexact2 = mpfr_sub1sp(x, y, z, (mpfr_rnd_t) r);
       if (mpfr_cmp(x, x2))

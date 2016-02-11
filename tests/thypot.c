@@ -1,7 +1,7 @@
 /* Test file for mpfr_hypot.
 
 Copyright 2001-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -320,7 +320,7 @@ main (int argc, char *argv[])
   test_large ();
   alltst ();
 
-  test_generic (2, 100, 10);
+  test_generic (MPFR_PREC_MIN, 100, 10);
 
   tests_end_mpfr ();
   return 0;

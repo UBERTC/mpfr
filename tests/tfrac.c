@@ -1,7 +1,7 @@
 /* Test file for mpfr_frac.
 
 Copyright 2002-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -291,7 +291,7 @@ main (void)
 
   bug20090918 ();
 
-  test_generic (2, 1000, 10);
+  test_generic (MPFR_PREC_MIN, 1000, 10);
 
   tests_end_mpfr ();
   return 0;

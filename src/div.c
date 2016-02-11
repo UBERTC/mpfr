@@ -1,7 +1,7 @@
 /* mpfr_div -- divide two floating-point numbers
 
 Copyright 1999, 2001-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -465,7 +465,7 @@ mpfr_div (mpfr_ptr q, mpfr_srcptr u, mpfr_srcptr v, mpfr_rnd_t rnd_mode)
       if (qh == 1)
         {
           mpn_rshift (qp, qp, n, 1);
-          qp[n - 1] ^= MPFR_LIMB_HIGHBIT;
+          qp[n - 1] |= MPFR_LIMB_HIGHBIT;
         }
       if (MPFR_LIKELY (mpfr_round_p (qp, n, p,
                                      MPFR_PREC(q) + (rnd_mode == MPFR_RNDN))))
@@ -479,15 +479,10 @@ mpfr_div (mpfr_ptr q, mpfr_srcptr u, mpfr_srcptr v, mpfr_rnd_t rnd_mode)
               /* we know we can round, thus we are never in the even rule case:
                  if the round bit is 0, we truncate
                  if the round bit is 1, we add 1 */
-              if (qh == 0)
-                {
-                  if (sh > 0)
-                    round_bit = (qp[1] >> (sh - 1)) & 1;
-                  else
-                    round_bit = qp[0] >> (GMP_NUMB_BITS - 1);
-                }
-              else /* qh = 1 */
-                round_bit = (qp[1] >> sh) & 1;
+              if (sh > 0)
+                round_bit = (qp[1] >> (sh - 1)) & 1;
+              else
+                round_bit = qp[0] >> (GMP_NUMB_BITS - 1);
               if (round_bit == 0)
                 {
                   inex = -1;

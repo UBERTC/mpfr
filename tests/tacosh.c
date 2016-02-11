@@ -1,7 +1,7 @@
 /* Test file for mpfr_acosh.
 
 Copyright 2001-2004, 2006-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -176,7 +176,17 @@ huge (void)
 {
   mpfr_t x, y, z;
   int inex;
+  mpfr_exp_t emax;
 
+  if (mpfr_get_emax_max () < 1073741823)
+    return;
+
+  emax = mpfr_get_emax ();
+  mpfr_set_emax (1073741823);
+
+  /* FIXME: The main purpose of this test was on 32-bit ABI,
+     but it is no longer run there. Solution: implement the
+     TODO below. */
   /* TODO: extend the exponent range and use mpfr_get_emax (). */
   mpfr_inits2 (32, x, y, z, (mpfr_ptr) 0);
   mpfr_set_ui_2exp (x, 1, 1073741822, MPFR_RNDN);
@@ -193,6 +203,7 @@ huge (void)
   MPFR_ASSERTN (inex < 0);
 
   mpfr_clears (x, y, z, (mpfr_ptr) 0);
+  mpfr_set_emax (emax);
 }
 
 int
@@ -204,8 +215,8 @@ main (int argc, char *argv[])
   bug20070831 ();
   huge ();
 
-  test_generic (2, 100, 25);
-  test_generic_huge (2, 100, 5);
+  test_generic (MPFR_PREC_MIN, 100, 25);
+  test_generic_huge (MPFR_PREC_MIN, 100, 5);
 
   data_check ("data/acosh", mpfr_acosh, "mpfr_acosh");
   bad_cases (mpfr_acosh, mpfr_cosh, "mpfr_acosh", 0, -128, 29,

@@ -1,7 +1,7 @@
 /* Test file for mpfr_cos.
 
 Copyright 2001-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -356,7 +356,7 @@ main (int argc, char *argv[])
   check53 ("1.00591265847407274059", "0.53531755997839769456",  MPFR_RNDN);
 
   overflowed_cos0 ();
-  test_generic (2, 100, 15);
+  test_generic (MPFR_PREC_MIN, 100, 15);
 
   /* check inexact flag */
   mpfr_set_prec (x, 3);

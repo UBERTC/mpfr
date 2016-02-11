@@ -1,7 +1,7 @@
 /* Implementations of operations between mpfr and mpz/mpq data
 
 Copyright 2001, 2003-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -231,7 +231,8 @@ mpfr_muldiv_z (mpfr_ptr y, mpfr_srcptr x, mpz_srcptr n, mpz_srcptr d,
                       MPFR_ASSERTN (!MPFR_BLOCK_EXCEP));
           MPFR_EXP (y) += ex;
           /* Detect highly unlikely, not supported corner cases... */
-          MPFR_ASSERTN (MPFR_EXP (y) >= __gmpfr_emin && MPFR_IS_PURE_FP (y));
+          MPFR_ASSERTN (MPFR_EXP (y) >= __gmpfr_emin);
+          MPFR_ASSERTN (! MPFR_IS_SINGULAR (y));
           /* The potential overflow will be detected by mpfr_check_range. */
         }
       else

@@ -1,7 +1,7 @@
 /* Test file for mpfr_coth.
 
 Copyright 2005-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -202,7 +202,7 @@ main (int argc, char *argv[])
 
   check_specials ();
   check_bugs ();
-  test_generic (2, 200, 10);
+  test_generic (MPFR_PREC_MIN, 200, 10);
   underflowed_cothinf ();
 
   tests_end_mpfr ();

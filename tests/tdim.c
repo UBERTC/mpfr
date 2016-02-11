@@ -1,7 +1,7 @@
 /* Test file for mpfr_dim.
 
 Copyright 2004-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -104,7 +104,7 @@ main (void)
   mpfr_clear (y);
   mpfr_clear (z);
 
-  test_generic (2, 220, 42);
+  test_generic (MPFR_PREC_MIN, 220, 42);
 
   tests_end_mpfr ();
   return 0;

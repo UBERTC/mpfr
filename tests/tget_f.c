@@ -1,7 +1,7 @@
 /* Test file for mpfr_get_f.
 
 Copyright 2005-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -176,7 +176,7 @@ ternary_test (void)
   mpf_init2 (x, 256);
   mpfr_init2 (y, 256);
 
-  for (prec = 2; prec <= 256; prec++)
+  for (prec = MPFR_PREC_MIN; prec <= 256; prec++)
     {
 
       mpf_set_prec (x, prec);

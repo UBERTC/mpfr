@@ -1,7 +1,7 @@
 /* tzeta -- test file for the Riemann Zeta function
 
 Copyright 2003-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -415,7 +415,7 @@ main (int argc, char *argv[])
   mpfr_clear (y);
   mpfr_clear (z);
 
-  test_generic (2, 70, 5);
+  test_generic (MPFR_PREC_MIN, 70, 5);
   test2 ();
 
   tests_end_mpfr ();
