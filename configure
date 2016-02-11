@@ -4,7 +4,7 @@
 #
 #
 # Copyright 1999-2016 Free Software Foundation, Inc.
-# Contributed by the AriC and Caramel projects, INRIA.
+# Contributed by the AriC and Caramba projects, INRIA.
 #
 # This file is part of the GNU MPFR Library.
 #
@@ -1571,7 +1571,7 @@ gives unlimited permission to copy, distribute and modify it.
 
 
 Copyright 1999-2016 Free Software Foundation, Inc.
-Contributed by the AriC and Caramel projects, INRIA.
+Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
 
@@ -15673,8 +15673,8 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GMP_NUMB_BITS and sizeof(mp_limb_t) consistency" >&5
 $as_echo_n "checking for GMP_NUMB_BITS and sizeof(mp_limb_t) consistency... " >&6; }
 if test "$cross_compiling" = yes; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: can't test" >&5
-$as_echo "can't test" >&6; }
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: cannot test" >&5
+$as_echo "cannot test" >&6; }
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -15768,8 +15768,8 @@ if test -z "$enable_mini_gmp" ; then
   LD_RUN_PATH="${LD_RUN_PATH:+$LD_RUN_PATH$PATH_SEPARATOR}$gmp_lib_path"
   export LD_RUN_PATH
   if test "$cross_compiling" = yes; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: can not test" >&5
-$as_echo "can not test" >&6; }
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: cannot test" >&5
+$as_echo "cannot test" >&6; }
 
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
