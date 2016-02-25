@@ -25,12 +25,12 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 /* FIXME: In the case where one or several input pointers point to the
    output variable, we need to store the significand in a new temporary
-   area, because these inputs may still need to be read for the possible
-   TMD resolution. Alternatively, since this is not necessarily a rare
-   case (doing s += sum(x[i],0<=i<n) should not be regarded as uncommon),
-   it may be better to optimize it by allocating a bit more for the second
-   sum_raw invocation and delaying the copy of the significand when this
-   occurs. Add a testcase to "tsum.c".
+   area (as usual), because these inputs may still need to be read for
+   the possible TMD resolution. Alternatively, since this is not
+   necessarily a rare case (doing s += sum(x[i],0<=i<n) should not be
+   regarded as uncommon), it may be better to optimize it by allocating
+   a bit more for the second sum_raw invocation and delaying the copy of
+   the significand when this occurs. Add a testcase to "tsum.c".
    Remove the sentences about overlapping from doc/mpfr.texi once this is
    fixed. */
 
@@ -966,10 +966,16 @@ sum_aux (mpfr_ptr sum, mpfr_ptr *const x, unsigned long n, mpfr_rnd_t rnd,
 
     MPFR_ASSERTD (corr >= -1 && corr <= 2);
 
-    if (pos)  /* positive result */
+    MPFR_SIGN (sum) = pos ? MPFR_SIGN_POS : MPFR_SIGN_NEG;
+
+    if (MPFR_UNLIKELY (sq == 1))  /* precision 1 */
+      {
+        sump[0] = MPFR_LIMB_HIGHBIT;
+        e += pos ? corr : 1 - corr;
+      }
+    else if (pos)  /* positive result with sq > 1 */
       {
         MPFR_ASSERTD (MPFR_LIMB_MSB (sump[sn-1]) != 0);
-        MPFR_SET_POS (sum);
         sump[0] &= ~ MPFR_LIMB_MASK (sd);
 
         if (corr > 0)
@@ -1007,10 +1013,9 @@ sum_aux (mpfr_ptr sum, mpfr_ptr *const x, unsigned long n, mpfr_rnd_t rnd,
               }
           }
       }
-    else  /* negative result */
+    else  /* negative result with sq > 1 */
       {
         MPFR_ASSERTD (MPFR_LIMB_MSB (sump[sn-1]) == 0);
-        MPFR_SET_NEG (sum);
 
         /* abs(x + corr) = - (x + corr) = com(x) + (1 - corr) */
 

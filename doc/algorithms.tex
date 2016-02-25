@@ -3151,7 +3151,7 @@ The incomplete gamma function is defined for $x \geq 0$ as
                = \Gamma(a) - \gamma(a,x), \]
 with the complementary incomplete gamma function $\gamma(a,x)$ defined by:
 \[ \gamma(a,x) = \int_0^x t^{a-1} \exp(-t) \, {\rm d}t, \]
-satisfying the two Taylor expansions:
+satisfying the two Taylor expansions \cite[formula 6.5.29]{AbSt73}:
 \[
 \gamma(a,x) = x^a \sum_{k=0}^{\infty} \frac{(-x)^k}{(a+k) k!}
             = x^a \exp(-x) \sum_{k=0}^{\infty} \frac{x^k}{a (a+1) \cdots
@@ -3167,6 +3167,99 @@ $\gamma(a,x)$ is less than $4k+14$ ulps.
 Subtracting from $\Gamma(a)$ can yield a huge cancellation: we take into
 account the exact error bound, which is deduced from the different exponents
 involved. Further details can be found in the source code.
+
+For negative integers $a$ we use the following formula
+\cite[formula 6.5.19]{AbSt73}:
+\[ \Gamma(-n,x) = \frac{(-1)^n}{n!} [E_1(x) - e^{-x}
+   \sum_{j=0}^{n-1} \frac{(-1)^j \, j!}{x^{j+1}}]. \]
+
+\subsubsection{Legendre's continued fraction}
+
+% see also "Effective Laguerre asymptotics" by Borwein, Borwein and Crandall
+% https://carma.newcastle.edu.au/jon/Laguerre.pdf (in connection with [47])
+% [47] S. Winitzki, Computing the incomplete gamma function to arbitrary
+% precision, LNCS 2667, 290, Springer–Verlag (2003).
+
+In \cite{Gautschi79}, Gautschi discusses the computation of $\Gamma(a,x)$
+with Legendre's continued fraction:
+\[ x^{-a} e^x \Gamma(a,x) = \frac{1}{x+} \frac{1-a}{1+} \frac{1}{x+}
+   \frac{2-a}{x+} \frac{2}{x+} \cdots \]
+where by contracting two consecutive terms we get:
+\begin{equation} \label{eq:legendre_cf}
+x^{-a} e^x \Gamma(a,x) = \sum_{k=0}^{\infty} t_k,
+\end{equation}
+with $t_k = \rho_0 \rho_1 \cdots \rho_k$,
+$\rho_0 = 1$, $\sigma_0 = 1$, and for $k \geq 1$,
+$\rho_k = -a_k \sigma_{k-1} / (1 + a_k \sigma_{k-1})$,
+$\sigma_k = 1 / (1 + a_k \sigma_{k-1})$, and:
+\[ a_k = \frac{k (a-k)}{(x + 2k - 1 - a) (x + 2k + 1 - a)}. \]
+Gautschi proves that when  $x \geq 1/4$ and $a \leq x + 1/4$, then
+$|\rho_k| \leq 1$ for all $k \geq 1$. However this is not enough to bound
+the tail of the above series.
+
+We consider here the case where $a \leq -1$, thus $a_k \leq 0$
+(remember $\Gamma(a,x)$ is only defined for $x \geq 0$).
+When $k$ goes to infinity, $a_k = -1/4 + x/(4k) + O(1/k^2)$.
+We prove that for $k \geq 2 \, {\rm max}(x,|a|)$, we have
+$a_k \geq -1/4 + x/(8k)$. Indeed,
+\[ a_k + \frac{1}{4} - \frac{x}{8k} = 
+% ak:=k*(a-k)/(x+2*k-1-a)/(x+2*k+1-a);
+% e:=normal(ak+1/4-x/8/k);
+% num:=numer(e); den:=denom(e);
+% num2:=x*(4*k^2-2*k*x-x^2+2*x*a+1-a^2)+2*k*(a^2-1);
+   \frac{x(4k^2-2kx+2xa-x^2-a^2+1)+2k(a^2-1)}{8k(x+2k-1-a)(x + 2 k + 1 - a)}. \]
+The denominator is positive for $k \geq 1$ as long as $x-a+1 > 0$,
+which holds since we assumed $a \leq -1$.
+The second term $2k(a^2-1)$ in the numerator is non-negative since $a \leq -1$;
+the factor of $x$ in the first term satisfies since $k \geq x$:
+\[ 4k^2-2kx+2xa-x^2-a^2+1 \geq
+   4k^2-2kx-2k|a|-x^2-a^2+1. \]
+Since the right-hand side is symmetric in $x$ and $|a|$, we can assume
+without loss of generality that $x \geq |a|$.
+Then $4k^2-2kx+2xa-x^2-a^2+1 \geq 4k^2-4kx-2x^2+1
+= (2k-x)^2 -3x^2 + 1$, which is positive when $k \geq 2x$.
+
+Since $a_k \geq -1/4 + x/(8k)$, we have $-1/4 \leq a_k \leq 0$, and
+since $\sigma_k = 1/(1 + a_k \sigma_{k-1})$ with $\sigma_0 = 1$,
+it follows by induction that $1 \leq \sigma_k \leq 2$ for all $k \geq 0$.
+It yields for $a \leq -1$ and $k \geq 2 \, {\rm max}(x,|a|)$:
+\[ \rho_k = \frac{-a_k \sigma_{k-1}}{1 + a_k \sigma_{k-1}} 
+   \leq -4 a_k \leq 1 - x/(2k). \]
+
+Assume now that we stop the series computation in Eq.~(\ref{eq:legendre_cf})
+after $t_k$. The neglected part is:
+\[ t_k (\rho_{k+1} + \rho_{k+1} \rho_{k+2} + \rho_{k+1} \rho_{k+2} \rho_{k+3}
+   + \cdots). \]
+Let $u_{k,\ell} := \rho_{k} \rho_{k+1} \cdots \rho_{\ell}$.
+Since $\rho_j \leq 1 - x/(2j)$ and $\log(1-u) \leq -u$ for $0 < u < 1$:
+\[ \log u_{k,\ell} = \sum_{j=k}^{\ell} \log \rho_j
+   \leq \sum_{j=k}^{\ell} \log (1-\frac{x}{2j})
+   \leq -x \sum_{j=k}^{\ell} \frac{1}{2j}
+   = -\frac{x}{2} (\psi(\ell+1) - \psi(k+1)). \]
+Using $\log(t-1) \leq \psi(t) \leq \log t$ yields:
+\[ \log u_{k,\ell} \leq \frac{x}{2} (\log(k+1) - \log(\ell)). \]
+Now since $\rho_k < 1$:
+\[ \rho_k + \rho_k \rho_{k+1} + \rho_k \rho_{k+1} \rho_{k+2} + \cdots
+   \leq 1 + \sum_{\ell=k+1}^{\infty} u_{k,\ell}
+   \leq 1 + \sum_{j=1}^{\infty} \exp(\frac{x}{2} \log\frac{k+1}{k+j}). \]
+We split the sum into blocks of $k+1$ consecutive terms:
+\begin{eqnarray*}
+\sum_{\ell=k+1}^{\infty} u_{k,\ell}
+   &\leq& \sum_{j=1}^{\infty} \left( \frac{k+1}{k+j} \right)^{x/2} \\
+   &\leq& (k+1) \left( \frac{k+1}{k+1} \right)^{x/2}
+   + (k+1) \left( \frac{k+1}{2k+2} \right)^{x/2}
+   + (k+1) \left( \frac{k+1}{3k+3} \right)^{x/2} + \cdots \\
+   &\leq& (k+1) (1 + (1/2)^{x/2} + (1/3)^{x/2} + \cdots) = (k+1) \zeta(x/2).
+\end{eqnarray*}
+
+\begin{lemma}
+Assume $a \leq -1$,
+and we stop the series computation in Eq.~(\ref{eq:legendre_cf})
+after $t_k$, with $k \geq 2 \, {\rm max}(x,|a|)$.
+Then the error on the sum of the right hand side
+of Eq.~(\ref{eq:legendre_cf}) is bounded by
+\[ t_k (1 + (k+1) \zeta(x/2)). \]
+\end{lemma}
 
 \subsection{The Riemann Zeta function}
 

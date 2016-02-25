@@ -23,13 +23,13 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #ifdef HAVE_CONFIG_H
-# include "config.h"       /* for a build within gmp */
+# include "config.h"
 #endif
 
 #include "mpfr-intmax.h"
 #include "mpfr-test.h"
 
-#define FTEST(N,NOT,FCT)                                        \
+#define FTEST_AUX(N,NOT,FCT)                                    \
   do                                                            \
     {                                                           \
       __gmpfr_flags = ex_flags;                                 \
@@ -57,6 +57,22 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
     }                                                           \
   while (0)
 
+#define FTEST(N,NOT,FCT)                                        \
+  do                                                            \
+    {                                                           \
+      mpfr_exp_t e;                                             \
+      FTEST_AUX (N,NOT,FCT);                                    \
+      if (MPFR_IS_SINGULAR (x))                                 \
+        break;                                                  \
+      e = mpfr_get_exp (x);                                     \
+      set_emin (e);                                             \
+      set_emax (e);                                             \
+      FTEST_AUX (N,NOT,FCT);                                    \
+      set_emin (emin);                                          \
+      set_emax (emax);                                          \
+    }                                                           \
+  while (0)
+
 #define CHECK_ALL(N,NOT)                                        \
   do                                                            \
     {                                                           \
@@ -77,16 +93,41 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
     }                                                           \
   while (0)
 
+/* V is a non-zero limit for the type (*_MIN for a signed type or *_MAX).
+ * If V is positive, then test V, V + 1/4, V + 3/4 and V + 1.
+ * If V is negative, then test V, V - 1/4, V - 3/4 and V - 1.
+ */
+#define CHECK_LIM(N,V,SET,FCT)                                  \
+  do                                                            \
+    {                                                           \
+      SET (x, V, MPFR_RNDN);                                    \
+      FTEST (N, !, FCT);                                        \
+      mpfr_set_si_2exp (y, (V) < 0 ? -1 : 1, -2, MPFR_RNDN);    \
+      mpfr_add (x, x, y, MPFR_RNDN);                            \
+      FTEST (N+1, (r == MPFR_RNDN ||                            \
+                   MPFR_IS_LIKE_RNDZ (r, (V) < 0)) ^ !!, FCT);  \
+      mpfr_add (x, x, y, MPFR_RNDN);                            \
+      mpfr_add (x, x, y, MPFR_RNDN);                            \
+      FTEST (N+3, MPFR_IS_LIKE_RNDZ (r, (V) < 0) ^ !!, FCT);    \
+      mpfr_add (x, x, y, MPFR_RNDN);                            \
+      FTEST (N+4, !!, FCT);                                     \
+    }                                                           \
+  while (0)
+
 int
 main (void)
 {
+  mpfr_exp_t emin, emax;
   mpfr_t x, y;
   mpfr_flags_t flags[2] = { 0, MPFR_FLAGS_ALL }, ex_flags;
   int i, r, fi;
 
   tests_start_mpfr ();
 
-  mpfr_init2 (x, 256);
+  emin = mpfr_get_emin ();
+  emax = mpfr_get_emax ();
+
+  mpfr_init2 (x, sizeof (unsigned long) * CHAR_BIT + 2);
   mpfr_init2 (y, 8);
 
   RND_LOOP (r)
@@ -129,43 +170,20 @@ main (void)
         mpfr_mul_2exp (x, x, 40, MPFR_RNDN);
         CHECK_ALL (9, !!);
 
+        /* Check a non-integer number just below a power of two. */
+        mpfr_set_ui_2exp (x, 255, -2, MPFR_RNDN);
+        CHECK_ALL (10, !);
+
         /* Check the limits of the types (except 0 for unsigned types) */
-        mpfr_set_ui (x, ULONG_MAX, MPFR_RNDN);
-        FTEST (10, !, mpfr_fits_ulong_p);
-        mpfr_add_ui (x, x, 1, MPFR_RNDN);
-        FTEST (11, !!, mpfr_fits_ulong_p);
-        mpfr_set_si (x, LONG_MAX, MPFR_RNDN);
-        FTEST (12, !, mpfr_fits_slong_p);
-        mpfr_add_ui (x, x, 1, MPFR_RNDN);
-        FTEST (13, !!, mpfr_fits_slong_p);
-        mpfr_set_si (x, LONG_MIN, MPFR_RNDN);
-        FTEST (14, !, mpfr_fits_slong_p);
-        mpfr_sub_ui (x, x, 1, MPFR_RNDN);
-        FTEST (15, !!, mpfr_fits_slong_p);
-        mpfr_set_ui (x, UINT_MAX, MPFR_RNDN);
-        FTEST (16, !, mpfr_fits_uint_p);
-        mpfr_add_ui (x, x, 1, MPFR_RNDN);
-        FTEST (17, !!, mpfr_fits_uint_p);
-        mpfr_set_si (x, INT_MAX, MPFR_RNDN);
-        FTEST (18, !, mpfr_fits_sint_p);
-        mpfr_add_ui (x, x, 1, MPFR_RNDN);
-        FTEST (19, !!, mpfr_fits_sint_p);
-        mpfr_set_si (x, INT_MIN, MPFR_RNDN);
-        FTEST (20, !, mpfr_fits_sint_p);
-        mpfr_sub_ui (x, x, 1, MPFR_RNDN);
-        FTEST (21, !!, mpfr_fits_sint_p);
-        mpfr_set_ui (x, USHRT_MAX, MPFR_RNDN);
-        FTEST (22, !, mpfr_fits_ushort_p);
-        mpfr_add_ui (x, x, 1, MPFR_RNDN);
-        FTEST (23, !!, mpfr_fits_ushort_p);
-        mpfr_set_si (x, SHRT_MAX, MPFR_RNDN);
-        FTEST (24, !, mpfr_fits_sshort_p);
-        mpfr_add_ui (x, x, 1, MPFR_RNDN);
-        FTEST (25, !!, mpfr_fits_sshort_p);
-        mpfr_set_si (x, SHRT_MIN, MPFR_RNDN);
-        FTEST (26, !, mpfr_fits_sshort_p);
-        mpfr_sub_ui (x, x, 1, MPFR_RNDN);
-        FTEST (27, !!, mpfr_fits_sshort_p);
+        CHECK_LIM (20, ULONG_MAX, mpfr_set_ui, mpfr_fits_ulong_p);
+        CHECK_LIM (30, LONG_MAX, mpfr_set_si, mpfr_fits_slong_p);
+        CHECK_LIM (35, LONG_MIN, mpfr_set_si, mpfr_fits_slong_p);
+        CHECK_LIM (40, UINT_MAX, mpfr_set_ui, mpfr_fits_uint_p);
+        CHECK_LIM (50, INT_MAX, mpfr_set_si, mpfr_fits_sint_p);
+        CHECK_LIM (55, INT_MIN, mpfr_set_si, mpfr_fits_sint_p);
+        CHECK_LIM (60, USHRT_MAX, mpfr_set_ui, mpfr_fits_ushort_p);
+        CHECK_LIM (70, SHRT_MAX, mpfr_set_si, mpfr_fits_sshort_p);
+        CHECK_LIM (75, SHRT_MIN, mpfr_set_si, mpfr_fits_sshort_p);
 
         /* Check negative op */
         for (i = 1; i <= 4; i++)
@@ -175,18 +193,18 @@ main (void)
             mpfr_set_si_2exp (x, -i, -2, MPFR_RNDN);
             mpfr_rint (y, x, (mpfr_rnd_t) r);
             inv = MPFR_NOTZERO (y);
-            FTEST (40, inv ^ !, mpfr_fits_ulong_p);
-            FTEST (40,       !, mpfr_fits_slong_p);
-            FTEST (40, inv ^ !, mpfr_fits_uint_p);
-            FTEST (40,       !, mpfr_fits_sint_p);
-            FTEST (40, inv ^ !, mpfr_fits_ushort_p);
-            FTEST (40,       !, mpfr_fits_sshort_p);
+            FTEST (80, inv ^ !, mpfr_fits_ulong_p);
+            FTEST (81,       !, mpfr_fits_slong_p);
+            FTEST (82, inv ^ !, mpfr_fits_uint_p);
+            FTEST (83,       !, mpfr_fits_sint_p);
+            FTEST (84, inv ^ !, mpfr_fits_ushort_p);
+            FTEST (85,       !, mpfr_fits_sshort_p);
           }
       }
 
 #ifdef _MPFR_H_HAVE_INTMAX_T
 
-  mpfr_set_prec (x, sizeof (uintmax_t) * CHAR_BIT);
+  mpfr_set_prec (x, sizeof (uintmax_t) * CHAR_BIT + 2);
 
   RND_LOOP (r)
     {
@@ -222,19 +240,14 @@ main (void)
       mpfr_set_ui_2exp (x, 42, sizeof (uintmax_t) * 32, MPFR_RNDN);
       CHECK_MAX (8, !!);
 
+      /* Check a non-integer number just below a power of two. */
+      mpfr_set_ui_2exp (x, 255, -2, MPFR_RNDN);
+      CHECK_MAX (10, !);
+
       /* Check the limits of the types (except 0 for uintmax_t) */
-      mpfr_set_uj (x, MPFR_UINTMAX_MAX, MPFR_RNDN);
-      FTEST (10, !, mpfr_fits_uintmax_p);
-      mpfr_add_ui (x, x, 1, MPFR_RNDN);
-      FTEST (11, !!, mpfr_fits_uintmax_p);
-      mpfr_set_sj (x, MPFR_INTMAX_MAX, MPFR_RNDN);
-      FTEST (12, !, mpfr_fits_intmax_p);
-      mpfr_add_ui (x, x, 1, MPFR_RNDN);
-      FTEST (13, !!, mpfr_fits_intmax_p);
-      mpfr_set_sj (x, MPFR_INTMAX_MIN, MPFR_RNDN);
-      FTEST (14, !, mpfr_fits_intmax_p);
-      mpfr_sub_ui (x, x, 1, MPFR_RNDN);
-      FTEST (15, !!, mpfr_fits_intmax_p);
+      CHECK_LIM (20, MPFR_UINTMAX_MAX, mpfr_set_uj, mpfr_fits_uintmax_p);
+      CHECK_LIM (30, MPFR_INTMAX_MAX, mpfr_set_sj, mpfr_fits_intmax_p);
+      CHECK_LIM (35, MPFR_INTMAX_MIN, mpfr_set_sj, mpfr_fits_intmax_p);
 
       /* Check negative op */
       for (i = 1; i <= 4; i++)
@@ -244,8 +257,8 @@ main (void)
           mpfr_set_si_2exp (x, -i, -2, MPFR_RNDN);
           mpfr_rint (y, x, (mpfr_rnd_t) r);
           inv = MPFR_NOTZERO (y);
-          FTEST (40, inv ^ !, mpfr_fits_uintmax_p);
-          FTEST (40,       !, mpfr_fits_intmax_p);
+          FTEST (80, inv ^ !, mpfr_fits_uintmax_p);
+          FTEST (81,       !, mpfr_fits_intmax_p);
         }
     }
 

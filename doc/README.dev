@@ -93,6 +93,9 @@ not change when the patch is applied with the -Z option. Otherwise the
 autotools would be needed to build MPFR (unless maintainer mode is
 disabled).
 
+Patches are put under the misc/www directory of the Subversion repository.
+The web server is updated and patches are also copied as InriaForge files.
+
 ===========================================================================
 
 When submitting patches, unified diffs (option -u) are recommended,
@@ -177,9 +180,11 @@ To make a release (for the MPFR team):
      Also update the "API Compatibility" section in the manual (mpfr.texi).
      Check with abi-compliance-checker (ABI Compliance Checker)[*], on the
      latest MPFR releases built with no configure options (except --prefix),
-     that no changes have been missed. Note that abi-compliance-checker can
-     only check the symbols, types and constants; it cannot detect just a
-     change in the behavior, thus may miss some incompatibilities.
+     that no changes have been missed. The ^/misc/build-multi script in the
+     repository may be useful to prepare data for abi-compliance-checker.
+     Note that abi-compliance-checker can only check the symbols, types
+     and constants; it cannot detect just a change in the behavior, thus
+     may miss some incompatibilities.
      Update the FAQ.html file with update-faq (and check it) in the doc
      directory.
      [*] http://lvc.github.io/abi-compliance-checker/
@@ -453,6 +458,17 @@ List of macros used for checking MPFR:
 + MPFR_COV_CHECK:       Define to enable value coverage checking (must not
                         be used in production). This macro is for the MPFR
                         developers, in order to improve the test suite.
+
+===========================================================================
+
+Before testing any macro in a .c file, one needs:
+
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+except if mpfr-impl.h (for the library) or mpfr-test.h (for the tests) is
+included first, because these header files already have the above code.
 
 ===========================================================================
 

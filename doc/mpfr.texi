@@ -619,7 +619,7 @@ gcc myprogram.c -lmpfr -lgmp
 
 @cindex Libtool
 MPFR is built using Libtool and an application can use that to link if
-desired, @MPFRpxreftop{libtool.info, GNU Libtool}
+desired, @MPFRpxreftop{libtool, GNU Libtool}
 @c Note: the .info extension has been added to avoid the following bug:
 @c   https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=484740
 @c which occurs when reading the info file from the build directory:
@@ -1253,8 +1253,6 @@ system provides the @samp{_Decimal64} data type
 (recent versions of GCC support this data type);
 to use @code{mpfr_set_decimal64}, one should define the macro
 @code{MPFR_WANT_DECIMAL_FLOATS} before including @file{mpfr.h}.
-@c GCC 4.2.0 required to be configured with --enable-decimal-float
-@c but GCC 4.4.3 seems to have decimal support by default
 @code{mpfr_set_q} might fail if the numerator (or the
 denominator) can not be represented as a @code{mpfr_t}.
 
@@ -2053,19 +2051,19 @@ Set @var{rop} to the factorial of @var{op}, rounded in the direction @var{rnd}.
 @deftypefun int mpfr_eint (mpfr_t @var{rop}, mpfr_t @var{op}, mpfr_rnd_t @var{rnd})
 Set @var{rop} to the exponential integral of @var{op},
 rounded in the direction @var{rnd}.
-For positive @var{op},
-the exponential integral is the sum of Euler's constant, of the logarithm
-of @var{op}, and of the sum for k from 1 to infinity of
+This is the sum of Euler's constant, of the logarithm
+of the absolute value of @var{op}, and of the sum for k from 1 to infinity of
 @ifnottex
-@var{op} to the power k, divided by k and factorial(k)
+@var{op} to the power k, divided by k and factorial(k).
 @end ifnottex
 @tex
-$@var{op}^k/(k \cdot k!)$
+$@var{op}^k/(k \cdot k!)$.
 @end tex
+For positive @var{op}, it corresponds to the Ei function at @var{op}
 (see formula 5.1.10 from the Handbook of Mathematical Functions from
-Abramowitz and Stegun).
-For negative @var{op}, @var{rop} is set to the opposite of the
-E1 exponential integral (sometimes called eint1)
+Abramowitz and Stegun),
+and for negative @var{op}, to the opposite of the
+E1 function (sometimes called eint1)
 at @minus{}@var{op} (formula 5.1.1 from the same reference).
 @end deftypefun
 
@@ -2078,16 +2076,20 @@ to @var{op}}.
 @c on the correct form.
 @end deftypefun
 
-@c FIXME: Clarify the status of mpfr_gamma_inc for the MPFR 3.2 release.
 @deftypefun int mpfr_gamma (mpfr_t @var{rop}, mpfr_t @var{op}, mpfr_rnd_t @var{rnd})
 @deftypefunx int mpfr_gamma_inc (mpfr_t @var{rop}, mpfr_t @var{op}, mpfr_t @var{op2}, mpfr_rnd_t @var{rnd})
 Set @var{rop} to the value of the Gamma function on @var{op}, resp. the
 incomplete Gamma function on @var{op} and @var{op2},
 rounded in the direction @var{rnd}.
+(In the literature, @code{mpfr_gamma_inc} is called upper
+incomplete Gamma function,
+or sometimes complementary incomplete Gamma function.)
 For @code{mpfr_gamma} (and @code{mpfr_gamma_inc} when @var{op2} is zero),
 when @var{op} is a negative integer, @var{rop} is set to NaN@.
-For @code{mpfr_gamma_inc}, the case where @var{op} is zero
-(except when @var{op2} is zero) or a negative integer is not yet implemented.
+
+Note: the current implementation of @code{mpfr_gamma_inc} is slow for
+large values of @var{rop} or @var{op}, in which case some internal overflow
+might also occur.
 @end deftypefun
 
 @deftypefun int mpfr_lngamma (mpfr_t @var{rop}, mpfr_t @var{op}, mpfr_rnd_t @var{rnd})
@@ -3073,6 +3075,12 @@ compiler-level Thread Local Storage (that is, MPFR was built with the
 zero otherwise.
 @end deftypefun
 
+@deftypefun int mpfr_buildopt_float128_p (void)
+Return a non-zero value if MPFR was compiled with @samp{__float128} support
+(that is, MPFR was built with the @code{--enable-float128} configure option),
+return zero otherwise.
+@end deftypefun
+
 @deftypefun int mpfr_buildopt_decimal_p (void)
 Return a non-zero value if MPFR was compiled with decimal float support (that
 is, MPFR was built with the @code{--enable-decimal-float} configure option),
@@ -3625,6 +3633,8 @@ that were added after MPFR 2.2, and in which MPFR version.
 @item @code{mpfr_asprintf} in MPFR 2.4.
 
 @item @code{mpfr_buildopt_decimal_p} and @code{mpfr_buildopt_tls_p} in MPFR 3.0.
+
+@item @code{mpfr_buildopt_float128_p} in MPFR 3.2.
 
 @item @code{mpfr_buildopt_gmpinternals_p} and @code{mpfr_buildopt_tune_case}
 in MPFR 3.1.

@@ -21,7 +21,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+# include "config.h"
 #endif
 
 /* The mpfr_printf-like functions are defined only if <stdarg.h> exists.
@@ -132,6 +132,7 @@ mpfr_vfprintf (FILE *fp, const char *fmt, va_list ap)
   mpfr_free_str (str);
   return ret;
 }
+
 #endif /* _MPFR_H_HAVE_FILE */
 
 int
