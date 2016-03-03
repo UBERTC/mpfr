@@ -1458,10 +1458,12 @@ Optional Features:
                           do not reject slow dependency extractors
   --disable-dependency-tracking
                           speeds up one-time build
+  --disable-decimal-float explicitly disable decimal floats support
   --enable-decimal-float  build conversion functions from/to decimal floats
-                          [default=no]
+                          [default=autodetect]
+  --disable-float128      explicitly disable __float128 support
   --enable-float128       build conversion functions from/to __float128
-                          [default=no]
+                          [default=autodetect]
   --enable-mini-gmp       build MPFR with mini-gmp (experimental) [default=no]
   --enable-debug-prediction
                           [for developers] enable debug of branch prediction
@@ -3211,6 +3213,7 @@ else
 fi
 
   MAINT=$MAINTAINER_MODE_TRUE
+
 
 
 
@@ -5171,93 +5174,68 @@ unknown)
 esac
 
 
-# Check whether --enable-decimal-float was given.
-if test "${enable_decimal_float+set}" = set; then :
-  enableval=$enable_decimal_float;  case $enableval in
-      yes)
-$as_echo "#define MPFR_WANT_DECIMAL_FLOATS 1" >>confdefs.h
-
-           { $as_echo "$as_me:${as_lineno-$LINENO}: checking if compiler knows _Decimal64" >&5
-$as_echo_n "checking if compiler knows _Decimal64... " >&6; }
-           cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-_Decimal64 x;
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-as_fn_error $? "Compiler doesn't know _Decimal64 (ISO/IEC TR 24732).
-Please use another compiler or build MPFR without --enable-decimal-float." "$LINENO" 5
-
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-           { $as_echo "$as_me:${as_lineno-$LINENO}: checking decimal float format" >&5
-$as_echo_n "checking decimal float format... " >&6; }
-           if test "$cross_compiling" = yes; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: assuming DPD" >&5
-$as_echo "assuming DPD" >&6; }
-       $as_echo "#define DPD_FORMAT 1" >>confdefs.h
-
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking format of \`double' floating point" >&5
+$as_echo_n "checking format of \`double' floating point... " >&6; }
+if test "$cross_compiling" = yes; then :
+  mpfr_ieee_double=0
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
-#include <stdlib.h>
+#include <stdint.h>
 
 int
 main ()
 {
 
-volatile _Decimal64 x = 1;
-union { double d; _Decimal64 d64; } y;
-if (x != x) return 3;
-y.d64 = 1234567890123456.0dd;
-return y.d == 0.14894469406741037E-123 ? 0 :
-       y.d == 0.59075095508629822E-68  ? 1 : 2;
+union ieee_double_extract
+{
+  double d;
+  unsigned char x[8];
+} t;
+t.d = 2.877939254133025759330166692961938679218292236328125; /* exact */
+if (sizeof (double) != 8)
+   return 0;
+if (sizeof (unsigned char) != 1)
+   return 0;
+if (t.x[0] == 1 && t.x[1] == 2 && t.x[2] == 3 && t.x[3] == 4 &&
+    t.x[4] == 5 && t.x[5] == 6 && t.x[6] == 7 && t.x[7] == 64)
+   return 1; /* little endian */
+else if (t.x[7] == 1 && t.x[6] == 2 && t.x[5] == 3 && t.x[4] == 4 &&
+    t.x[3] == 5 && t.x[2] == 6 && t.x[1] == 7 && t.x[0] == 64)
+   return 2; /* big endian */
+else
+   return 0; /* unknown */
 
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_run "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: DPD" >&5
-$as_echo "DPD" >&6; }
-       $as_echo "#define DPD_FORMAT 1" >>confdefs.h
-
+  mpfr_ieee_double=$?
 else
-  case "$?" in
-         1) { $as_echo "$as_me:${as_lineno-$LINENO}: result: BID" >&5
-$as_echo "BID" >&6; } ;;
-         2) { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "neither DPD nor BID
-See \`config.log' for more details" "$LINENO" 5; } ;;
-         3) { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "_Decimal64 support is broken.
-Please use another compiler or build MPFR without --enable-decimal-float.
-See \`config.log' for more details" "$LINENO" 5; } ;;
-         *) { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-as_fn_error $? "internal error
-See \`config.log' for more details" "$LINENO" 5; } ;;
-       esac
+  mpfr_ieee_double=$?
 fi
 rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
   conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
 
-           ;;
+case "$mpfr_ieee_double" in
+  1) { $as_echo "$as_me:${as_lineno-$LINENO}: result: IEEE little endian" >&5
+$as_echo "IEEE little endian" >&6; }
+     $as_echo "#define HAVE_DOUBLE_IEEE_LITTLE_ENDIAN 1" >>confdefs.h
+ ;;
+  2) { $as_echo "$as_me:${as_lineno-$LINENO}: result: IEEE big endian" >&5
+$as_echo "IEEE big endian" >&6; }
+     $as_echo "#define HAVE_DOUBLE_IEEE_BIG_ENDIAN 1" >>confdefs.h
+ ;;
+  *) as_fn_error $? "format of \`double' floating-point not recognized" "$LINENO" 5 ;;
+esac
+
+# Check whether --enable-decimal-float was given.
+if test "${enable_decimal_float+set}" = set; then :
+  enableval=$enable_decimal_float;  case $enableval in
+      yes) ;;
       no)  ;;
       *)   as_fn_error $? "bad value for --enable-decimal-float: yes or no" "$LINENO" 5 ;;
      esac
@@ -5267,30 +5245,7 @@ fi
 # Check whether --enable-float128 was given.
 if test "${enable_float128+set}" = set; then :
   enableval=$enable_float128;  case $enableval in
-      yes)
-$as_echo "#define MPFR_WANT_FLOAT128 1" >>confdefs.h
-
-           { $as_echo "$as_me:${as_lineno-$LINENO}: checking if compiler knows __float128" >&5
-$as_echo_n "checking if compiler knows __float128... " >&6; }
-           cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-__float128 x;
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-else
-  as_fn_error $? "Compiler doesn't know __float128; try GCC >= 4.3
-           " "$LINENO" 5
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext;;
+      yes) ;;
       no)  ;;
       *)   as_fn_error $? "bad value for --enable-float128: yes or no" "$LINENO" 5 ;;
      esac
@@ -6703,49 +6658,6 @@ fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 
-case $host in
-alpha*-*-*)
-  saved_CFLAGS="$CFLAGS"
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for IEEE-754 switches" >&5
-$as_echo_n "checking for IEEE-754 switches... " >&6; }
-if ${mpfr_cv_ieee_switches+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-
-  if test -n "$GCC"; then
-    mpfr_cv_ieee_switches="-mfp-rounding-mode=d -mieee-with-inexact"
-  else
-    mpfr_cv_ieee_switches="-fprm d -ieee_with_inexact"
-  fi
-  CFLAGS="$CFLAGS $mpfr_cv_ieee_switches"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-
-else
-  mpfr_cv_ieee_switches="none"
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $mpfr_cv_ieee_switches" >&5
-$as_echo "$mpfr_cv_ieee_switches" >&6; }
-  if test "$mpfr_cv_ieee_switches" = "none"; then
-    CFLAGS="$saved_CFLAGS"
-  else
-    CFLAGS="$saved_CFLAGS $mpfr_cv_ieee_switches"
-  fi
-esac
-
 ac_fn_c_check_type "$LINENO" "long long int" "ac_cv_type_long_long_int" "$ac_includes_default"
 if test "x$ac_cv_type_long_long_int" = xyes; then :
 
@@ -7030,8 +6942,8 @@ $as_echo "$mpfr_cv_gcc_floatconv_bug" >&6; }
   fi
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for subnormal numbers" >&5
-$as_echo_n "checking for subnormal numbers... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for subnormal double-precision numbers" >&5
+$as_echo_n "checking for subnormal double-precision numbers... " >&6; }
 if ${mpfr_cv_have_denorms+:} false; then :
   $as_echo_n "(cached) " >&6
 else
@@ -7046,7 +6958,7 @@ else
 int main (void) {
   double x = 2.22507385850720138309e-308;
   fprintf (stderr, "%e\n", x / 2.0);
-  return 2.0 * (x / 2.0) != x;
+  return 2.0 * (double) (x / 2.0) != x;
 }
 
 _ACEOF
@@ -7066,6 +6978,44 @@ $as_echo "$mpfr_cv_have_denorms" >&6; }
 if test "$mpfr_cv_have_denorms" = "yes"; then
 
 $as_echo "#define HAVE_DENORMS 1" >>confdefs.h
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for subnormal single-precision numbers" >&5
+$as_echo_n "checking for subnormal single-precision numbers... " >&6; }
+if ${mpfr_cv_have_denorms_flt+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+if test "$cross_compiling" = yes; then :
+  mpfr_cv_have_denorms_flt="cannot test, assume no"
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <stdio.h>
+int main (void) {
+  float x = 1.17549435082229e-38;
+  fprintf (stderr, "%e\n", x / 2.0);
+  return 2.0 * (float) (x / 2.0) != x;
+}
+
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  mpfr_cv_have_denorms_flt="yes"
+else
+  mpfr_cv_have_denorms_flt="no"
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $mpfr_cv_have_denorms_flt" >&5
+$as_echo "$mpfr_cv_have_denorms_flt" >&6; }
+if test "$mpfr_cv_have_denorms_flt" = "yes"; then
+
+$as_echo "#define HAVE_DENORMS_FLT 1" >>confdefs.h
 
 fi
 
@@ -7829,7 +7779,7 @@ esac
 
 if test "$enable_logging" = yes; then
   if test "$enable_thread_safe" = yes; then
-    as_fn_error $? "Enable either \`Logging' or \`thread-safe', not both" "$LINENO" 5
+    as_fn_error $? "enable either \`Logging' or \`thread-safe', not both" "$LINENO" 5
   else
     enable_thread_safe=no
   fi
@@ -7931,6 +7881,124 @@ fi
 
  CPPFLAGS="$saved_CPPFLAGS"
  fi
+fi
+
+if test "$enable_decimal_float" != no; then
+           { $as_echo "$as_me:${as_lineno-$LINENO}: checking if compiler knows _Decimal64" >&5
+$as_echo_n "checking if compiler knows _Decimal64... " >&6; }
+           cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+_Decimal64 x;
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+$as_echo "#define MPFR_WANT_DECIMAL_FLOATS 1" >>confdefs.h
+
+               { $as_echo "$as_me:${as_lineno-$LINENO}: checking decimal float format" >&5
+$as_echo_n "checking decimal float format... " >&6; }
+               if test "$cross_compiling" = yes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: assuming DPD" >&5
+$as_echo "assuming DPD" >&6; }
+       $as_echo "#define DPD_FORMAT 1" >>confdefs.h
+
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <stdlib.h>
+
+int
+main ()
+{
+
+volatile _Decimal64 x = 1;
+union { double d; _Decimal64 d64; } y;
+if (x != x) return 3;
+y.d64 = 1234567890123456.0dd;
+return y.d == 0.14894469406741037E-123 ? 0 :
+       y.d == 0.59075095508629822E-68  ? 1 : 2;
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: DPD" >&5
+$as_echo "DPD" >&6; }
+       $as_echo "#define DPD_FORMAT 1" >>confdefs.h
+
+else
+  case "$?" in
+         1) { $as_echo "$as_me:${as_lineno-$LINENO}: result: BID" >&5
+$as_echo "BID" >&6; } ;;
+         2) { $as_echo "$as_me:${as_lineno-$LINENO}: result: neither DPD nor BID" >&5
+$as_echo "neither DPD nor BID" >&6; }
+            if test "$enable_decimal_float" = yes; then
+               as_fn_error $? "unsupported decimal float format.
+Please build MPFR without --enable-decimal-float." "$LINENO" 5
+            fi ;;
+         *) { $as_echo "$as_me:${as_lineno-$LINENO}: result: internal error" >&5
+$as_echo "internal error" >&6; }
+            { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "unexpected exit status
+See \`config.log' for more details" "$LINENO" 5; } ;;
+       esac
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+               if test "$enable_decimal_float" = yes; then
+                  as_fn_error $? "compiler doesn't know _Decimal64 (ISO/IEC TR 24732).
+Please use another compiler or build MPFR without --enable-decimal-float." "$LINENO" 5
+               fi
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+
+if test "$enable_float128" != no; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: checking if compiler knows __float128" >&5
+$as_echo_n "checking if compiler knows __float128... " >&6; }
+   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+__float128 x;
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+$as_echo "#define MPFR_WANT_FLOAT128 1" >>confdefs.h
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+       if test "$enable_float128" = yes; then
+          as_fn_error $? "compiler doesn't know __float128
+Please use another compiler or build MPFR without --enable-float128." "$LINENO" 5
+       fi
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Static Assertion support" >&5
@@ -15636,7 +15704,7 @@ else
 
  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
- as_fn_error $? "There is an incompatibility between gmp.h and the compiler.
+ as_fn_error $? "there is an incompatibility between gmp.h and the compiler.
 See 'config.log' for details." "$LINENO" 5
 
 fi
