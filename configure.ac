@@ -42,6 +42,16 @@ dnl early, even when this option is not used. In particular, it must
 dnl be put after AC_PROG_CC; another problem is that the GMP CFLAGS
 dnl and CC check may modify the compiler.
 
+dnl FIXME: Several AC_RUN_IFELSE programs can return several values
+dnl (one for each format to be detected), but the Autoconf manual says:
+dnl "This exit status might be that of a failed compilation, or it might
+dnl be that of a failed program execution." Unfortunately, we cannot
+dnl know whether a non-zero exit status comes from a failed compilation,
+dnl so that the detection may be incorrect. To avoid this problem, write
+dnl a test program for each possible format? Alternatively, the test
+dnl program could output the result of the format detection to a file
+dnl and return with the 0 exit status if it could do that successfully.
+
 test_CFLAGS=${CFLAGS+set}
 
 dnl Check if user request its CC and CFLAGS
@@ -274,6 +284,41 @@ AC_LANG(C)
 dnl Support unusual archivers.
 AM_PROG_AR
 
+dnl Try to determine the double format
+AC_MSG_CHECKING(format of `double' floating point)
+AC_RUN_IFELSE([AC_LANG_PROGRAM([[
+#include <stdint.h>
+]], [[
+union ieee_double_extract
+{
+  double d;
+  unsigned char x[8];
+} t;
+t.d = 2.877939254133025759330166692961938679218292236328125; /* exact */
+if (sizeof (double) != 8)
+   return 0;
+if (sizeof (unsigned char) != 1)
+   return 0;
+if (t.x[0] == 1 && t.x[1] == 2 && t.x[2] == 3 && t.x[3] == 4 &&
+    t.x[4] == 5 && t.x[5] == 6 && t.x[6] == 7 && t.x[7] == 64)
+   return 1; /* little endian */
+else if (t.x[7] == 1 && t.x[6] == 2 && t.x[5] == 3 && t.x[4] == 4 &&
+    t.x[3] == 5 && t.x[2] == 6 && t.x[1] == 7 && t.x[0] == 64)
+   return 2; /* big endian */
+else
+   return 0; /* unknown */
+]])],
+   [mpfr_ieee_double=$?],
+   [mpfr_ieee_double=$?],
+   [mpfr_ieee_double=0])
+case "$mpfr_ieee_double" in
+  1) AC_MSG_RESULT([IEEE little endian])
+     AC_DEFINE(HAVE_DOUBLE_IEEE_LITTLE_ENDIAN) ;;
+  2) AC_MSG_RESULT([IEEE big endian])
+     AC_DEFINE(HAVE_DOUBLE_IEEE_BIG_ENDIAN) ;;
+  *) AC_MSG_ERROR([format of `double' floating-point not recognized]) ;;
+esac
+
 dnl For GCC, _Decimal64 was introduced in GCC 4.3 for some targets
 dnl (note that it is not guaranteed to be available because it may
 dnl be disabled in the GCC build). See:
@@ -284,55 +329,23 @@ dnl _Decimal64 support is broken with GCC 4.6.3 and 4.7.2 on powerpc64
 dnl with the mode32 ABI, e.g. "-m32 -mpowerpc64 -mtune=970 -O3"; this
 dnl is detected by the x != x test below.
 AC_ARG_ENABLE(decimal-float,
-   [  --enable-decimal-float  build conversion functions from/to decimal floats
-                          [[default=no]]],
+   [  --disable-decimal-float explicitly disable decimal floats support
+  --enable-decimal-float  build conversion functions from/to decimal floats
+                          [[default=autodetect]]],
    [ case $enableval in
-      yes) AC_DEFINE([MPFR_WANT_DECIMAL_FLOATS],1,
-              [Build decimal float functions])
-           AC_MSG_CHECKING(if compiler knows _Decimal64)
-           AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[_Decimal64 x;]])],
-              [AC_MSG_RESULT(yes)],
-              [AC_MSG_RESULT(no)
-AC_MSG_ERROR([Compiler doesn't know _Decimal64 (ISO/IEC TR 24732).
-Please use another compiler or build MPFR without --enable-decimal-float.])]
-           )
-           AC_MSG_CHECKING(decimal float format)
-           AC_RUN_IFELSE([AC_LANG_PROGRAM([[
-#include <stdlib.h>
-]], [[
-volatile _Decimal64 x = 1;
-union { double d; _Decimal64 d64; } y;
-if (x != x) return 3;
-y.d64 = 1234567890123456.0dd;
-return y.d == 0.14894469406741037E-123 ? 0 :
-       y.d == 0.59075095508629822E-68  ? 1 : 2;
-]])], [AC_MSG_RESULT(DPD)
-       AC_DEFINE([DPD_FORMAT],1,[])],
-      [case "$?" in
-         1) AC_MSG_RESULT(BID) ;;
-         2) AC_MSG_FAILURE(neither DPD nor BID) ;;
-         3) AC_MSG_FAILURE([_Decimal64 support is broken.
-Please use another compiler or build MPFR without --enable-decimal-float.]) ;;
-         *) AC_MSG_FAILURE(internal error) ;;
-       esac],
-      [AC_MSG_RESULT(assuming DPD)
-       AC_DEFINE([DPD_FORMAT],1,[])])
-           ;;
+      yes) ;;
       no)  ;;
       *)   AC_MSG_ERROR([bad value for --enable-decimal-float: yes or no]) ;;
      esac])
 
+dnl GCC >= 4.3 provides __float128, but since this is not standard,
+dnl the default is "autodetect" and not "yes"
 AC_ARG_ENABLE(float128,
-   [  --enable-float128       build conversion functions from/to __float128
-                          [[default=no]]],
+   [  --disable-float128      explicitly disable __float128 support
+  --enable-float128       build conversion functions from/to __float128
+                          [[default=autodetect]]],
    [ case $enableval in
-      yes) AC_DEFINE([MPFR_WANT_FLOAT128],1,
-              [Build float128 conversion functions])
-           AC_MSG_CHECKING(if compiler knows __float128)
-           AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[__float128 x;]])],
-              [AC_MSG_RESULT(yes)],
-              [AC_MSG_ERROR([Compiler doesn't know __float128; try GCC >= 4.3]
-           )]);;
+      yes) ;;
       no)  ;;
       *)   AC_MSG_ERROR([bad value for --enable-float128: yes or no]) ;;
      esac])
@@ -558,7 +571,7 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #include "gmp.h"
 ]],[[]])],[AC_MSG_RESULT(yes)],[
  AC_MSG_RESULT(no)
- AC_MSG_ERROR([There is an incompatibility between gmp.h and the compiler.
+ AC_MSG_ERROR([there is an incompatibility between gmp.h and the compiler.
 See 'config.log' for details.])
 ])
 
@@ -603,8 +616,8 @@ See 'config.log' for details (search for GMP_NUMB_BITS).])],
 
 dnl Check if we can link with GMP
 AC_CHECK_LIB(gmp, $test_libgmp, [LIBS="-lgmp $LIBS"],
- [AC_MSG_ERROR(libgmp not found or uses a different ABI (including static vs shared).
-Please read the INSTALL file -- see "In case of problem".)])
+ [AC_MSG_ERROR([libgmp not found or uses a different ABI (including static vs shared).
+Please read the INSTALL file -- see "In case of problem".])])
 
 dnl Check for corresponding 'gmp.h' and libgmp
 AC_MSG_CHECKING(if gmp.h version and libgmp version are the same)

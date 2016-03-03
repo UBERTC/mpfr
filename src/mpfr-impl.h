@@ -545,12 +545,12 @@ __MPFR_DECLSPEC extern const mpfr_t __gmpfr_const_log2_RNDU;
 # endif
 #endif
 
-/* Debug non IEEE floats */
+/* With -DXDEBUG, exercise non IEEE floats */
 #ifdef XDEBUG
-# undef _GMP_IEEE_FLOATS
-#endif
-#ifndef _GMP_IEEE_FLOATS
-# define _GMP_IEEE_FLOATS 0
+# ifdef _MPFR_IEEE_FLOATS
+#  undef _MPFR_IEEE_FLOATS
+# endif
+# define _MPFR_IEEE_FLOATS 0
 #endif
 
 #ifndef IEEE_DBL_MANT_DIG
@@ -571,6 +571,7 @@ __MPFR_DECLSPEC extern const mpfr_t __gmpfr_const_log2_RNDU;
    double_zero version until IEEE 754 division by zero is properly
    supported:
      https://llvm.org/bugs/show_bug.cgi?id=17005
+   Note: DBL_NAN is 0/0, thus its value is a quiet NaN (qNAN).
 */
 #if (defined(_MSC_VER) && defined(_WIN32) && (_MSC_VER >= 1200)) || \
     defined(__clang__)
@@ -586,7 +587,7 @@ static double double_zero = 0.0;
 # define DBL_NEG_ZERO (-0.0)
 #endif
 
-/* Note: In the past, there was specific code for _GMP_IEEE_FLOATS, which
+/* Note: In the past, there was specific code for _MPFR_IEEE_FLOATS, which
    was based on NaN and Inf memory representations. This code was breaking
    the aliasing rules (see ISO C99, 6.5#6 and 6.5#7 on the effective type)
    and for this reason it did not behave correctly with GCC 4.5.0 20091119.
@@ -611,7 +612,12 @@ static double double_zero = 0.0;
 /* Avoid MIPSpro / IRIX64 / gcc -ffast-math (incorrect) optimizations.
    The + must not be replaced by a ||. With gcc -ffast-math, NaN is
    regarded as a positive number or something like that; the second
-   test catches this case. */
+   test catches this case.
+   [2016-03-01] Various tests now fail with gcc -ffast-math or just
+   -ffinite-math-only; such options are not supported, but this makes
+   difficult to test MPFR assuming x == x optimization to 1. Anyway
+   support of functions/tests of using native FP and special values for
+   non-IEEE-754 environment will always be on a case-by-case basis. */
 # define DOUBLE_ISNAN(x) \
     (LVALUE(x) && !((((x) >= 0.0) + ((x) <= 0.0)) && -(x)*(x) <= 0.0))
 #else

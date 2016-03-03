@@ -199,10 +199,6 @@ __MPFR_DECLSPEC void mpfr_assert_fail _MPFR_PROTO((const char *, int,
 #define PREC(x) ((x)->_mp_prec)
 #define ALLOC(x) ((x)->_mp_alloc)
 
-/* Non IEEE float supports -- needs to detect them with proper configure */
-#undef  XDEBUG
-#define XDEBUG
-
 /* For longlong.h */
 #ifdef HAVE_ATTRIBUTE_MODE
 typedef unsigned int UQItype    __attribute__ ((mode (QI)));
@@ -430,7 +426,55 @@ typedef unsigned long mp_bitcnt_t;
 typedef mp_limb_t *mpfr_limb_ptr;
 typedef const mp_limb_t *mpfr_limb_srcptr;
 
+/* mpfr_ieee_double_extract structure (copied from GMP 6.1.0, gmp-impl.h, with
+   ieee_double_extract changed into mpfr_ieee_double_extract, and
+   _GMP_IEEE_FLOATS changed into _MPFR_IEEE_FLOATS. */
 
+/* Define mpfr_ieee_double_extract and _MPFR_IEEE_FLOATS.
+
+   Bit field packing is "implementation defined" according to C99, which
+   leaves us at the compiler's mercy here.  For some systems packing is
+   defined in the ABI (eg. x86).  In any case so far it seems universal that
+   little endian systems pack from low to high, and big endian from high to
+   low within the given type.
+
+   Within the fields we rely on the integer endianness being the same as the
+   float endianness, this is true everywhere we know of and it'd be a fairly
+   strange system that did anything else.  */
+
+#ifndef _MPFR_IEEE_FLOATS
+
+#if HAVE_DOUBLE_IEEE_LITTLE_ENDIAN
+#define _MPFR_IEEE_FLOATS 1
+union mpfr_ieee_double_extract
+{
+  struct
+    {
+      unsigned long manl:32;
+      unsigned long manh:20;
+      unsigned long exp:11;
+      unsigned long sig:1;
+    } s;
+  double d;
+};
+#endif
+
+#if HAVE_DOUBLE_IEEE_BIG_ENDIAN
+#define _MPFR_IEEE_FLOATS 1
+union mpfr_ieee_double_extract
+{
+  struct
+    {
+      unsigned long sig:1;
+      unsigned long exp:11;
+      unsigned long manh:20;
+      unsigned long manl:32;
+    } s;
+  double d;
+};
+#endif
+
+#endif /* _MPFR_IEEE_FLOATS */
 
 /******************************************************
  ******************** C++ Compatibility ***************

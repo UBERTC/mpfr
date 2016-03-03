@@ -59,15 +59,18 @@ Changes from versions 3.1.* to version 3.2.0:
   now the usual ternary value.
 - Internally, improved caching: a minimum of 10% increase of the precision
   is guaranteed to avoid too many recomputations; added mpz_t caching.
-  [TODO: add shared caches; note that the ABI can be changed.]
+  [TODO: add shared caches.]
 - Added configure option --enable-assert=none to avoid checking any assertion.
 - The --enable-decimal-float configure option no longer requires
-  --with-gmp-build.
+  --with-gmp-build, and support for decimal floats is now automatically
+  detected by default (similarly for support for __float128).
 - Updated tuning parameters.
 - Better support for Automake 1.13+ (now used to generate the tarball).
 - Dropped K&R C compatibility.
 - Improved MPFR manual.
 - New MPFRbench program (see the tools/bench directory).
+- Speedup by a factor of almost 2 in the double <--> mpfr conversions
+  (mpfr_set_d and mpfr_get_d).
 - Speedup in the mpfr_const_euler function (contributed by Fredrik Johansson),
   in the computation of Bernoulli numbers (used in mpfr_gamma, mpfr_li2,
   mpfr_digamma, mpfr_lngamma and mpfr_lgamma), in mpfr_div, in mpfr_fma
@@ -75,6 +78,7 @@ Changes from versions 3.1.* to version 3.2.0:
 - Bug fixes. In particular: a speed improvement when the --enable-assert
   or --enable-assert=full configure option is used with GCC; mpfr_get_str
   now sets the NaN flag on NaN input.
+- MinGW (MS Windows): Added support for thread-safe DLL (shared library).
 
 Changes from versions 3.0.* to version 3.1.0:
 - The "canard à l'orange" release.
