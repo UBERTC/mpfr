@@ -269,6 +269,9 @@ Table of contents:
 5. Efficiency
 ##############################################################################
 
+- Fredrik Johansson reports that mpfr_ai is slow for large arguments: an
+  asymptotic expansion should be used (once done, remove REDUCE_EMAX from
+  tests/tai.c and update the description in mpfr.texi).
 - for exp(x), Fredrik Johansson reports a 20% speed improvement starting from
   4000 bits, and up to a 75% memory improvement in his Arb implementation, by
   using recursive instead of iterative binary splitting:
@@ -369,10 +372,6 @@ Table of contents:
 - during the Many Digits competition, we noticed that (our implantation of)
   Mulders short product was slower than a full product for large sizes.
   This should be precisely analyzed and fixed if needed.
-
-- implement optional cache sharing between threads (with light locking).
-  https://sympa.inria.fr/sympa/arc/mpfr/2013-09/msg00000.html
-  https://sympa.inria.fr/sympa/arc/mpfr/2013-09/msg00002.html
 
 - for various functions, check the timings as a function of the magnitude
   of the input (and the input and/or output precisions?), and use better

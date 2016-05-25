@@ -30,9 +30,15 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 /* TODO: Add support for type long and extreme integer values, as done
    in tgeneric_ui.c; then tgeneric_ui.c could probably disappear. */
 
+#ifndef ONE_ARG
 #if defined(TWO_ARGS) || defined(DOUBLE_ARG1) || defined(DOUBLE_ARG2) || \
   defined(ULONG_ARG1) || defined(ULONG_ARG2)
 #define TWO_ARGS_ALL
+#endif
+#endif
+
+#if defined(TWO_ARGS_ALL) || defined(ULONG_ARG1) || defined(ULONG_ARG2)
+#define NEED_U
 #endif
 
 #ifndef TEST_RANDOM_POS
@@ -141,7 +147,7 @@ test_generic (mpfr_prec_t p0, mpfr_prec_t p1, unsigned int nmax)
 {
   mpfr_prec_t prec, xprec, yprec;
   mpfr_t x, y, z, t, w;
-#if defined(TWO_ARGS_ALL)
+#ifdef NEED_U
   mpfr_t u;
 #endif
 #if defined(DOUBLE_ARG1) || defined(DOUBLE_ARG2)
@@ -161,7 +167,7 @@ test_generic (mpfr_prec_t p0, mpfr_prec_t p1, unsigned int nmax)
   old_emax = mpfr_get_emax ();
 
   mpfr_inits2 (MPFR_PREC_MIN, x, y, z, t, w, (mpfr_ptr) 0);
-#if defined(TWO_ARGS_ALL)
+#ifdef NEED_U
   mpfr_init2 (u, MPFR_PREC_MIN);
 #endif
 
@@ -175,9 +181,9 @@ test_generic (mpfr_prec_t p0, mpfr_prec_t p1, unsigned int nmax)
       mpfr_set_prec (w, yprec);
 
 #if defined(TWO_ARGS) || defined(DOUBLE_ARG1) || defined(DOUBLE_ARG2)
-#define NSPEC 8
+#define NSPEC 9
 #else
-#define NSPEC 4
+#define NSPEC 5
 #endif
 
       /* Note: in precision p1, we test NSPEC special cases. */
@@ -235,18 +241,33 @@ test_generic (mpfr_prec_t p0, mpfr_prec_t p1, unsigned int nmax)
 #endif
               set_emin (MPFR_EMIN_MIN);
               set_emax (MPFR_EMAX_MAX);
-              if (n <= 1)
+              if (n == 0)
                 {
-                  mpfr_set_si (x, n == 0 ? 1 : -1, MPFR_RNDN);
+                  mpfr_set_nan (x);
+#if defined(TWO_ARGS) || defined(DOUBLE_ARG1) || defined(DOUBLE_ARG2)
+#if defined(RAND_FUNCTION)
+                  RAND_FUNCTION (u);
+#else
+                  tests_default_random (u, TEST_RANDOM_POS2,
+                                        TEST_RANDOM_EMIN, TEST_RANDOM_EMAX,
+                                        TEST_RANDOM_ALWAYS_SCALE);
+#endif
+#endif
+                }
+              else if (n <= 2)
+                {
+                  MPFR_ASSERTN (n == 1 || n == 2);
+                  mpfr_set_si (x, n == 1 ? 1 : -1, MPFR_RNDN);
                   mpfr_set_exp (x, REDUCE_EMIN);
 #if defined(TWO_ARGS) || defined(DOUBLE_ARG1) || defined(DOUBLE_ARG2)
                   mpfr_set_si (u, randlimb () % 2 == 0 ? 1 : -1, MPFR_RNDN);
                   mpfr_set_exp (u, REDUCE_EMIN);
 #endif
                 }
-              else if (n <= 3)
+              else if (n <= 4)
                 {
-                  mpfr_set_si (x, n == 2 ? 1 : -1, MPFR_RNDN);
+                  MPFR_ASSERTN (n == 3 || n == 4);
+                  mpfr_set_si (x, n == 3 ? 1 : -1, MPFR_RNDN);
                   mpfr_setmax (x, REDUCE_EMAX);
 #if defined(TWO_ARGS) || defined(DOUBLE_ARG1) || defined(DOUBLE_ARG2)
                   mpfr_set_si (u, randlimb () % 2 == 0 ? 1 : -1, MPFR_RNDN);
@@ -254,9 +275,10 @@ test_generic (mpfr_prec_t p0, mpfr_prec_t p1, unsigned int nmax)
 #endif
                 }
 #if defined(TWO_ARGS) || defined(DOUBLE_ARG1) || defined(DOUBLE_ARG2)
-              else if (n <= 5)
+              else if (n <= 6)
                 {
-                  mpfr_set_si (x, n == 4 ? 1 : -1, MPFR_RNDN);
+                  MPFR_ASSERTN (n == 5 || n == 6);
+                  mpfr_set_si (x, n == 5 ? 1 : -1, MPFR_RNDN);
                   mpfr_set_exp (x, REDUCE_EMIN);
 #if defined(TWO_ARGS) || defined(DOUBLE_ARG1) || defined(DOUBLE_ARG2)
                   mpfr_set_si (u, randlimb () % 2 == 0 ? 1 : -1, MPFR_RNDN);
@@ -265,14 +287,15 @@ test_generic (mpfr_prec_t p0, mpfr_prec_t p1, unsigned int nmax)
                 }
               else
                 {
-                  mpfr_set_si (x, n == 6 ? 1 : -1, MPFR_RNDN);
+                  MPFR_ASSERTN (n == 7 || n == 8);
+                  mpfr_set_si (x, n == 7 ? 1 : -1, MPFR_RNDN);
                   mpfr_setmax (x, REDUCE_EMAX);
 #if defined(TWO_ARGS) || defined(DOUBLE_ARG1) || defined(DOUBLE_ARG2)
                   mpfr_set_si (u, randlimb () % 2 == 0 ? 1 : -1, MPFR_RNDN);
                   mpfr_set_exp (u, REDUCE_EMIN);
 #endif
                 }
-#endif
+#endif  /* two arguments */
             }
 
 #if defined(ULONG_ARG1) || defined(ULONG_ARG2)
@@ -302,6 +325,8 @@ test_generic (mpfr_prec_t p0, mpfr_prec_t p1, unsigned int nmax)
           compare = TEST_FUNCTION (y, x, d, rnd);
           /* d can be infinite due to overflow in mpfr_get_d */
           infinite_input |= DOUBLE_ISINF (d);
+#elif defined(ULONG_ARG1) && defined(ONE_ARG)
+          compare = TEST_FUNCTION (y, i, rnd);
 #elif defined(ULONG_ARG1)
           compare = TEST_FUNCTION (y, i, x, rnd);
 #elif defined(ULONG_ARG2)
@@ -364,6 +389,8 @@ test_generic (mpfr_prec_t p0, mpfr_prec_t p1, unsigned int nmax)
                     inexact = TEST_FUNCTION (w, d, x, rnd);
 #elif defined(DOUBLE_ARG2)
                     inexact = TEST_FUNCTION (w, x, d, rnd);
+#elif defined(ULONG_ARG1) && defined(ONE_ARG)
+                    inexact = TEST_FUNCTION (w, i, rnd);
 #elif defined(ULONG_ARG1)
                     inexact = TEST_FUNCTION (w, i, x, rnd);
 #elif defined(ULONG_ARG2)
@@ -383,7 +410,7 @@ test_generic (mpfr_prec_t p0, mpfr_prec_t p1, unsigned int nmax)
                                 (mpfr_eexp_t) oemin, (mpfr_eexp_t) e - 1);
                         printf ("x = ");
                         mpfr_dump (x);
-#if defined(TWO_ARGS_ALL)
+#ifdef NEED_U
                         printf ("u = ");
                         mpfr_dump (u);
 #endif
@@ -412,6 +439,8 @@ test_generic (mpfr_prec_t p0, mpfr_prec_t p1, unsigned int nmax)
                     inexact = TEST_FUNCTION (w, d, x, rnd);
 #elif defined(DOUBLE_ARG2)
                     inexact = TEST_FUNCTION (w, x, d, rnd);
+#elif defined(ULONG_ARG1) && defined(ONE_ARG)
+                    inexact = TEST_FUNCTION (w, i, rnd);
 #elif defined(ULONG_ARG1)
                     inexact = TEST_FUNCTION (w, i, x, rnd);
 #elif defined(ULONG_ARG2)
@@ -431,7 +460,7 @@ test_generic (mpfr_prec_t p0, mpfr_prec_t p1, unsigned int nmax)
                                 (mpfr_eexp_t) e + 1, (mpfr_eexp_t) oemax);
                         printf ("x = ");
                         mpfr_dump (x);
-#if defined(TWO_ARGS_ALL)
+#ifdef NEED_U
                         printf ("u = ");
                         mpfr_dump (u);
 #endif
@@ -475,6 +504,8 @@ test_generic (mpfr_prec_t p0, mpfr_prec_t p1, unsigned int nmax)
                 inexact = TEST_FUNCTION (w, d, x, rnd);
 #elif defined(DOUBLE_ARG2)
                 inexact = TEST_FUNCTION (w, x, d, rnd);
+#elif defined(ULONG_ARG1) && defined(ONE_ARG)
+                inexact = TEST_FUNCTION (w, i, rnd);
 #elif defined(ULONG_ARG1)
                 inexact = TEST_FUNCTION (w, i, x, rnd);
 #elif defined(ULONG_ARG2)
@@ -495,7 +526,7 @@ test_generic (mpfr_prec_t p0, mpfr_prec_t p1, unsigned int nmax)
                             (mpfr_eexp_t) emin, (mpfr_eexp_t) emax);
                     printf ("x = ");
                     mpfr_dump (x);
-#if defined(TWO_ARGS_ALL)
+#ifdef NEED_U
                     printf ("u = ");
                     mpfr_dump (u);
 #endif
@@ -584,6 +615,8 @@ test_generic (mpfr_prec_t p0, mpfr_prec_t p1, unsigned int nmax)
               inexact = TEST_FUNCTION (z, d, x, rnd);
 #elif defined(DOUBLE_ARG2)
               inexact = TEST_FUNCTION (z, x, d, rnd);
+#elif defined(ULONG_ARG1) && defined(ONE_ARG)
+              inexact = TEST_FUNCTION (z, i, rnd);
 #elif defined(ULONG_ARG1)
               inexact = TEST_FUNCTION (z, i, x, rnd);
 #elif defined(ULONG_ARG2)
@@ -598,7 +631,7 @@ test_generic (mpfr_prec_t p0, mpfr_prec_t p1, unsigned int nmax)
                   printf ("tgeneric: results differ for "
                           MAKE_STR(TEST_FUNCTION) " on\n  x = ");
                   mpfr_dump (x);
-#if defined(TWO_ARGS_ALL)
+#ifdef NEED_U
                   printf ("  u = ");
                   mpfr_dump (u);
 #endif
@@ -625,7 +658,7 @@ test_generic (mpfr_prec_t p0, mpfr_prec_t p1, unsigned int nmax)
                           "\n", mpfr_print_rnd_mode (rnd), compare, inexact);
                   printf ("x = ");
                   mpfr_dump (x);
-#if defined(TWO_ARGS_ALL)
+#ifdef NEED_U
                   printf ("u = ");
                   mpfr_dump (u);
 #endif
@@ -651,7 +684,7 @@ test_generic (mpfr_prec_t p0, mpfr_prec_t p1, unsigned int nmax)
                           mpfr_print_rnd_mode (rnd));
                   printf ("x = ");
                   mpfr_dump (x);
-#if defined(TWO_ARGS_ALL)
+#ifdef NEED_U
                   printf ("u = ");
                   mpfr_dump (u);
 #endif
@@ -674,7 +707,7 @@ test_generic (mpfr_prec_t p0, mpfr_prec_t p1, unsigned int nmax)
 #endif
 
   mpfr_clears (x, y, z, t, w, (mpfr_ptr) 0);
-#if defined(TWO_ARGS_ALL)
+#ifdef NEED_U
   mpfr_clear (u);
 #endif
 }
@@ -687,6 +720,7 @@ test_generic (mpfr_prec_t p0, mpfr_prec_t p1, unsigned int nmax)
 #undef RAND_FUNCTION
 #undef TWO_ARGS
 #undef TWO_ARGS_ALL
+#undef NEED_U
 #undef DOUBLE_ARG1
 #undef DOUBLE_ARG2
 #undef ULONG_ARG1

@@ -71,8 +71,26 @@ mpfr_mpz_clear (mpz_t z)
 
 #endif
 
-void
-mpfr_free_cache (void)
+/* Theses caches may be global to all threads or local to the current */
+static void
+mpfr_free_const_caches (void)
+{
+#ifndef MPFR_USE_LOGGING
+  mpfr_clear_cache (__gmpfr_cache_const_pi);
+  mpfr_clear_cache (__gmpfr_cache_const_log2);
+#else
+  mpfr_clear_cache (__gmpfr_normal_pi);
+  mpfr_clear_cache (__gmpfr_normal_log2);
+  mpfr_clear_cache (__gmpfr_logging_pi);
+  mpfr_clear_cache (__gmpfr_logging_log2);
+#endif
+  mpfr_clear_cache (__gmpfr_cache_const_euler);
+  mpfr_clear_cache (__gmpfr_cache_const_catalan);
+}
+
+/* Theses caches are always local to a thread */
+static void
+mpfr_free_local_cache (void)
 {
   /* Before mpz caching */
   mpfr_bernoulli_freecache();
@@ -86,16 +104,29 @@ mpfr_free_cache (void)
     n_alloc = 0;
   }
 #endif
+}
 
-#ifndef MPFR_USE_LOGGING
-  mpfr_clear_cache (__gmpfr_cache_const_pi);
-  mpfr_clear_cache (__gmpfr_cache_const_log2);
-#else
-  mpfr_clear_cache (__gmpfr_normal_pi);
-  mpfr_clear_cache (__gmpfr_normal_log2);
-  mpfr_clear_cache (__gmpfr_logging_pi);
-  mpfr_clear_cache (__gmpfr_logging_log2);
+void
+mpfr_free_cache (void)
+{
+  mpfr_free_local_cache();
+  mpfr_free_const_caches ();
+}
+
+void
+mpfr_free_cache2 (mpfr_free_cache_t way)
+{
+  if (way & MPFR_FREE_LOCAL_CACHE)
+    {
+      mpfr_free_local_cache();
+#if !defined (WANT_SHARED_CACHE)
+      mpfr_free_const_caches ();
 #endif
-  mpfr_clear_cache (__gmpfr_cache_const_euler);
-  mpfr_clear_cache (__gmpfr_cache_const_catalan);
+    }
+  if (way & MPFR_FREE_GLOBAL_CACHE)
+    {
+#if defined (WANT_SHARED_CACHE)
+      mpfr_free_const_caches ();
+#endif
+    }
 }

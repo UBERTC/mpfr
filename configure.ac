@@ -26,7 +26,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 ])
 
 dnl Add check-news when it checks for more than 15 lines
-AC_INIT([MPFR],[3.2.0-dev])
+AC_INIT([MPFR],[4.0.0-dev])
 
 dnl Older Automake versions than 1.13 may still be supported, but no longer
 dnl tested, and many things have changed in 1.13. Moreover the INSTALL file
@@ -36,11 +36,6 @@ AM_INIT_AUTOMAKE([1.13 no-define dist-bzip2 dist-xz dist-zip])
 AM_MAINTAINER_MODE(enable)
 
 AC_CONFIG_MACRO_DIR([m4])
-
-dnl FIXME: The AC_ARG_ENABLE(decimal-float...) part does things too
-dnl early, even when this option is not used. In particular, it must
-dnl be put after AC_PROG_CC; another problem is that the GMP CFLAGS
-dnl and CC check may modify the compiler.
 
 dnl FIXME: Several AC_RUN_IFELSE programs can return several values
 dnl (one for each format to be detected), but the Autoconf manual says:
@@ -167,6 +162,17 @@ AC_ARG_ENABLE(thread-safe,
       *)   AC_MSG_ERROR([bad value for --enable-thread-safe: yes or no]) ;;
      esac])
 
+AC_ARG_ENABLE(shared-cache,
+   [  --enable-shared-cache   enable use of caches shared by all threads,
+                          for all MPFR constants.  It usually makes MPFR
+                          dependent on PTHREAD [[default=no]]],
+   [ case $enableval in
+      yes) mpfr_want_shared_cache=yes
+         AC_DEFINE([WANT_SHARED_CACHE],1,[Want shared cache]) ;;
+      no)  ;;
+      *) AC_MSG_ERROR([bad value for --enable-shared-cache: yes or no]) ;;
+     esac])
+
 AC_ARG_ENABLE(warnings,
    [  --enable-warnings       allow MPFR to output warnings to stderr [[default=no]]],
    [ case $enableval in
@@ -226,35 +232,34 @@ if test -z "$GMP_CC$GMP_CFLAGS" ; then
    # /lib/cpp under Solaris doesn't support some environment variables
    # used by GCC, such as C_INCLUDE_PATH. If the user has set up such
    # environment variables, he probably wants to use them. So, let us
-   # prefer cpp and gcc to /lib/cpp.
-   for cpp in cpp gcc /lib/cpp cc c99
+   # prefer cpp and gcc to /lib/cpp. However, note that this won't
+   # work if GCC has been installed with versioned names only (e.g.
+   # with cpp-5 and gcc-5).
+   for cpp in "cpp -P" "cpp" "gcc -P -E" "gcc -E" "/lib/cpp -P" "/lib/cpp" "cc -P -E" "cc -E" "c99 -P -E" "c99 -E"
    do
-     case $cpp in
-       *cpp*) ;;
-       *) cpp="$cpp -E" ;;
-     esac
-     echo foo > conftest.c
-     if $cpp $CPPFLAGS conftest.c > /dev/null 2> /dev/null ; then
-       # Get CC
-       echo "#include \"gmp.h\"" >  conftest.c
-       echo "MPFR_OPTION __GMP_CC"           >> conftest.c
-       GMP_CC=`$cpp $CPPFLAGS conftest.c 2> /dev/null | $EGREP MPFR_OPTION | $SED -e 's/MPFR_OPTION //g;s/ *" *//g'`
-       # Get CFLAGS
-       echo "#include \"gmp.h\"" >  conftest.c
-       echo "MPFR_OPTION __GMP_CFLAGS"           >> conftest.c
-       unset rmpedantic
-       [test "$enable_logging" = yes && rmpedantic='s/[ "]-pedantic[ "]/ /g;']
-       GMP_CFLAGS=`$cpp $CPPFLAGS conftest.c 2> /dev/null | $EGREP MPFR_OPTION | $SED -e "$rmpedantic"'s/MPFR_OPTION //g;s/ *" *//g'`
-       break
-     fi
+     # Get CC
+     echo "#include \"gmp.h\"" > conftest.c
+     echo "MPFR_OPTION __GMP_CC" >> conftest.c
+     $cpp $CPPFLAGS conftest.c 2> /dev/null > conftest.txt
+     test $? -ne 0 && continue
+     GMP_CC=`$EGREP MPFR_OPTION conftest.txt | $SED -e 's/MPFR_OPTION //g;s/ *" *//g'`
+     # Get CFLAGS
+     echo "#include \"gmp.h\"" >  conftest.c
+     echo "MPFR_OPTION __GMP_CFLAGS" >> conftest.c
+     unset rmpedantic
+     [test "$enable_logging" = yes && rmpedantic='s/[ "]-pedantic[ "]/ /g;']
+     $cpp $CPPFLAGS conftest.c 2> /dev/null > conftest.txt
+     test $? -ne 0 && continue
+     GMP_CFLAGS=`$EGREP MPFR_OPTION conftest.txt | $SED -e "$rmpedantic"'s/MPFR_OPTION //g;s/ *" *//g'`
+     break
    done
    rm -f conftest*
    if test "x$GMP_CC" = "x__GMP_CC" || test "x$GMP_CFLAGS" = "x__GMP_CFLAGS" ; then
-      AC_MSG_RESULT(no)
+      AC_MSG_RESULT(failed)
       GMP_CFLAGS=
       GMP_CC=
    else
-      AC_MSG_RESULT(yes [CC=$GMP_CC CFLAGS=$GMP_CFLAGS])
+      AC_MSG_RESULT([CC=$GMP_CC CFLAGS=$GMP_CFLAGS])
    fi
 fi
 
@@ -281,13 +286,17 @@ AC_PROG_CC
 AC_PROG_CPP
 AC_LANG(C)
 
-dnl Support unusual archivers.
+dnl AM_PROG_AR is needed so that ar-lib (wrapper for Microsoft lib.exe)
+dnl gets installed by "automake -i" (if absent, "automake --warnings=all"
+dnl gives a warning).
 AM_PROG_AR
+
+dnl This must done before MPFR_CONFIGS.
+LT_INIT(win32-dll)
 
 dnl Try to determine the double format
 AC_MSG_CHECKING(format of `double' floating point)
 AC_RUN_IFELSE([AC_LANG_PROGRAM([[
-#include <stdint.h>
 ]], [[
 union ieee_double_extract
 {
@@ -316,7 +325,7 @@ case "$mpfr_ieee_double" in
      AC_DEFINE(HAVE_DOUBLE_IEEE_LITTLE_ENDIAN) ;;
   2) AC_MSG_RESULT([IEEE big endian])
      AC_DEFINE(HAVE_DOUBLE_IEEE_BIG_ENDIAN) ;;
-  *) AC_MSG_ERROR([format of `double' floating-point not recognized]) ;;
+  *) AC_MSG_WARN([format of `double' floating-point not recognized]) ;;
 esac
 
 dnl For GCC, _Decimal64 was introduced in GCC 4.3 for some targets
@@ -382,6 +391,18 @@ AC_ARG_ENABLE(debug-prediction,
       *)    AC_MSG_ERROR([bad value for --enable-debug-prediction: yes or no]) ;;
      esac])
 
+AC_ARG_ENABLE(lto,
+   [  --enable-lto            build MPFR with link-time-optimization
+                          (experimental) [[default: no]]],
+   [ case $enableval in
+      yes)  if test "$enable_shared" != "no"; then
+              AC_MSG_ERROR([--enable-lto can only work in static mode (--disable-shared)])
+            fi
+            enable_lto=yes
+            ;;
+      no)   ;;
+      *)    AC_MSG_ERROR([bad value for --enable-lto: yes or no]) ;;
+     esac])
 
 dnl Check if compiler is ICC, and if such a case, disable GCC
 dnl And add some specific flags.
@@ -496,7 +517,6 @@ dnl but it's "ar" format and cannot be used by the MS linker.  There
 dnl doesn't seem to be any GNU tool for generating or converting to .lib.
 AC_SUBST(MPFR_LDFLAGS)
 AC_SUBST(LIBMPFR_LDFLAGS)
-LT_INIT(win32-dll)
 case $host in
   *-*-cygwin* | *-*-mingw* | *-*-pw32* | *-*-os2*)
    AC_MSG_CHECKING(for DLL/static GMP)
@@ -723,7 +743,7 @@ if $EGREP -q -e '-dev$' $srcdir/VERSION; then
 fi
 
 dnl Output
-AC_CONFIG_FILES([Makefile doc/Makefile src/Makefile tests/Makefile tune/Makefile src/mparam.h:src/mparam_h.in tools/bench/Makefile])
+AC_CONFIG_FILES([Makefile mpfr.pc doc/Makefile src/Makefile tests/Makefile tune/Makefile src/mparam.h:src/mparam_h.in tools/bench/Makefile])
 AC_OUTPUT
 
 dnl NEWS README AUTHORS Changelog

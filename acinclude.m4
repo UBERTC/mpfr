@@ -206,6 +206,19 @@ if test "$mpfr_cv_have_builtin_unreachable" = "yes"; then
    [Define if the __builtin_unreachable GCC built-in is supported.])
 fi
 
+dnl Check for attribute constructor and destructor
+MPFR_CHECK_CONSTRUCTOR_ATTR()
+
+dnl Check for POSIX Thread. Since the AX_PTHREAD macro is not standard
+dnl (it is provided by autoconf-archive), we need to detect whether it
+dnl is left unexpanded, otherwise the configure script won't fail and
+dnl "make distcheck" won't give any error, yielding buggy tarballs!
+m4_pattern_forbid([AX_PTHREAD])
+AX_PTHREAD([])
+
+dnl Check for ISO C11 Thread
+MPFR_CHECK_C11_THREAD()
+
 dnl Check for fesetround
 AC_CACHE_CHECK([for fesetround], mpfr_cv_have_fesetround, [
 saved_LIBS="$LIBS"
@@ -498,6 +511,7 @@ int main (void) {
       AC_DEFINE([MPFR_USE_THREAD_SAFE],1,[Build MPFR as thread safe])
       AC_DEFINE([MPFR_USE_C11_THREAD_SAFE],1,[Build MPFR as thread safe using C11])
       tls_c11_support=yes
+      enable_thread_safe=yes
      ],
      [AC_MSG_RESULT(no)
      ],
@@ -521,6 +535,7 @@ then
    ]])],
       [AC_MSG_RESULT(yes)
        AC_DEFINE([MPFR_USE_THREAD_SAFE],1,[Build MPFR as thread safe])
+       enable_thread_safe=yes
       ],
       [AC_MSG_RESULT(no)
        if test "$enable_thread_safe" = yes; then
@@ -618,6 +633,15 @@ int main (void) {
      [AC_MSG_RESULT([cannot test, assume no])
      ])
 CPPFLAGS="$saved_CPPFLAGS"
+
+if test "$enable_lto" = "yes" ; then
+   MPFR_LTO
+fi
+
+dnl Check if the shared cache was requested and its requirements are ok.
+if test "$mpfr_want_shared_cache" = yes ;then
+   MPFR_CHECK_SHARED_CACHE()
+fi
 
 ])
 dnl end of MPFR_CONFIGS
@@ -1184,7 +1208,7 @@ case $mpfr_cv_c_long_double_format in
   unknown* | "not available")
     ;;
   *)
-    AC_MSG_WARN([oops, unrecognised float format: $mpfr_cv_c_long_double_format])
+    AC_MSG_WARN([unrecognized long double FP format: $mpfr_cv_c_long_double_format])
     ;;
 esac
 ])
@@ -1220,7 +1244,6 @@ esac
 dnl  MPFR_CHECK_LIBQUADMATH
 dnl  ---------------
 dnl  Determine a math library -lquadmath to use.
-
 AC_DEFUN([MPFR_CHECK_LIBQUADMATH],
 [AC_REQUIRE([AC_CANONICAL_HOST])
 AC_SUBST(MPFR_LIBQUADMATH,'')
@@ -1347,4 +1370,156 @@ MPFR_FUNC_GMP_PRINTF_SPEC([td], [ptrdiff_t], [
     ],
     [AC_DEFINE([PRINTF_T], 1, [gmp_printf can read ptrdiff_t])],
     [AC_DEFINE([NPRINTF_T], 1, [gmp_printf cannot read ptrdiff_t])])
+])
+
+dnl MPFR_LTO
+dnl --------
+dnl To be representative, we need:
+dnl * to compile a source,
+dnl * to generate a library archive,
+dnl * to generate a program with this archive.
+AC_DEFUN([MPFR_LTO],[
+dnl Check for -flto support
+CFLAGS="$CFLAGS -flto"
+
+AC_MSG_CHECKING([if Link Time Optimisation flag '-flto' is supported...])
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
+int main(void) { return 0; }
+  ]])],
+     [AC_MSG_RESULT(yes)
+     ],
+     [AC_MSG_RESULT(no)
+      AC_MSG_ERROR([Link Time Optimisation flag '-flto' is not supported.])
+     ])
+
+dnl Check if it works...
+mpfr_compile_and_link()
+{
+   echo "int f(int); int f(int n) { return n; }" > conftest-f.c
+   echo "int f(int); int main() { return f(0); }" > conftest-m.c
+   echo "$CC $CFLAGS -c -o conftest-f.o conftest-f.c" >&2
+   $CC $CFLAGS -c -o conftest-f.o conftest-f.c || return 1
+   echo "$AR cru conftest-lib.a conftest-f.o" >&2
+   $AR cru conftest-lib.a conftest-f.o || return 1
+   echo "$RANLIB conftest-lib.a" >&2
+   $RANLIB conftest-lib.a || return 1
+   echo "$CC $CFLAGS conftest-m.c conftest-lib.a" >&2
+   $CC $CFLAGS conftest-m.c conftest-lib.a || return 1
+   return 0
+}
+   AC_MSG_CHECKING([if Link Time Optimisation works with AR=$AR])
+   if mpfr_compile_and_link 2> conftest-log1.txt ; then
+      cat conftest-log1.txt >&AS_MESSAGE_LOG_FD
+      AC_MSG_RESULT(yes)
+   else
+      cat conftest-log1.txt >&AS_MESSAGE_LOG_FD
+      AC_MSG_RESULT(no)
+      AR=gcc-ar
+      RANLIB=gcc-ranlib
+      AC_MSG_CHECKING([if Link Time Optimisation works with AR=$AR])
+      if mpfr_compile_and_link 2> conftest-log2.txt; then
+         cat conftest-log2.txt >&AS_MESSAGE_LOG_FD
+         AC_MSG_RESULT(yes)
+      else
+        cat conftest-log2.txt >&AS_MESSAGE_LOG_FD
+        AC_MSG_RESULT(no)
+        AC_MSG_ERROR([Link Time Optimisation is not supported (see config.log for details).])
+      fi
+   fi
+rm -f conftest*
+])
+
+dnl MPFR_CHECK_SHARED_CACHE
+dnl ----------------------
+dnl Check if the conditions for the shared cache are met:
+dnl  * either pthread / C11 are available.
+dnl  * either constructor or once.
+AC_DEFUN([MPFR_CHECK_SHARED_CACHE], [
+  AC_MSG_CHECKING(if shared cache is supported)
+  if test "$enable_logging" = yes ; then
+    AC_MSG_RESULT(no)
+    AC_MSG_ERROR([shared cache does not work with logging support.])
+dnl because logging support disables threading support
+  elif test "$enable_thread_safe" != yes ; then
+    AC_MSG_RESULT(no)
+    AC_MSG_ERROR([shared cache needs thread attribute.])
+  elif test "$ax_pthread_ok" != yes && "$mpfr_c11_thread_ok" != yes ; then
+    AC_MSG_RESULT(no)
+    AC_MSG_ERROR([shared cache needs pthread/C11 library.])
+  else
+    AC_MSG_RESULT(yes)
+    if test "$ax_pthread_ok" = yes ; then
+        CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+        LIBS="$LIBS $PTHREAD_LIBS"
+    fi
+  fi
+])
+
+dnl MPFR_CHECK_CONSTRUCTOR_ATTR
+dnl ---------------------------
+dnl Check for constructor/destructor attributes to function.
+dnl Output: Define
+dnl  * MPFR_HAVE_CONSTRUCTOR_ATTR C define
+dnl  * mpfr_have_constructor_destructor_attributes shell variable to yes
+dnl if supported.
+AC_DEFUN([MPFR_CHECK_CONSTRUCTOR_ATTR], [
+AC_MSG_CHECKING([for constructor and destructor attributes])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#include <stdlib.h>
+int x = 0;
+__attribute__((constructor)) static void
+call_f(void) { x = 1742; }
+__attribute__((destructor)) static void
+call_g(void) { x = 1448; }
+]], [[
+    return (x == 1742) ? 0 : 1;
+]])], [AC_MSG_RESULT(yes)
+       mpfr_have_constructor_destructor_attributes=yes ],
+      [AC_MSG_RESULT(no)]
+)
+
+if test "$mpfr_have_constructor_destructor_attributes" = "yes"; then
+  AC_DEFINE(MPFR_HAVE_CONSTRUCTOR_ATTR, 1,
+   [Define if the constructor/destructor GCC attributes are supported.])
+fi
+])
+
+dnl MPFR_CHECK_C11_THREAD
+dnl ---------------------
+dnl Check for C11 thread support
+dnl Output: Define
+dnl  * MPFR_HAVE_C11_LOCK C define
+dnl  * mpfr_c11_thread_ok shell variable to yes
+dnl if supported.
+dnl We don't check for __STDC_NO_THREADS__ define variable but rather try to mimic our usage.
+AC_DEFUN([MPFR_CHECK_C11_THREAD], [
+AC_MSG_CHECKING([for ISO C11 thread support])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#include <assert.h>
+#include <thread.h>
+ mtx_t lock;
+ once_flag once = ONCE_FLAG_INIT;
+ thrd_t thd_idx;
+ int x = 0;
+ void once_call (void) { x = 1; }
+]], [[
+    int err;
+    err = mtx_init(&lock, mtx_plain);
+    assert(err == thrd_success);
+    err = mtx_lock(&lock);
+    assert(err == thrd_success);
+    err = mtx_unlock(&lock);
+    assert(err == thrd_success);
+    mtx_destroy(&lock);
+    once_call(&once, once_call);
+    return x == 1 ? 0 : -1;
+]])], [AC_MSG_RESULT(yes)
+       mpfr_c11_thread_ok=yes ],
+      [AC_MSG_RESULT(no)]
+)
+
+if test "$mpfr_c11_thread_ok" = "yes"; then
+  AC_DEFINE(MPFR_HAVE_C11_LOCK, 1,
+   [Define if the ISO C11 Thread is supported.])
+fi
 ])

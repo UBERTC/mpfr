@@ -1477,20 +1477,10 @@ partition_number (struct number_parts *np, mpfr_srcptr p,
                with left spaces instead */
             np->pad_type = LEFT;
 
-          if (uppercase)
-            {
-              np->ip_size = MPFR_NAN_STRING_LENGTH;
-              str = (char *) (*__gmp_allocate_func) (1 + np->ip_size);
-              strcpy (str, MPFR_NAN_STRING_UC);
-              np->ip_ptr = register_string (np->sl, str);
-            }
-          else
-            {
-              np->ip_size = MPFR_NAN_STRING_LENGTH;
-              str = (char *) (*__gmp_allocate_func) (1 + np->ip_size);
-              strcpy (str, MPFR_NAN_STRING_LC);
-              np->ip_ptr = register_string (np->sl, str);
-            }
+          np->ip_size = MPFR_NAN_STRING_LENGTH;
+          str = (char *) (*__gmp_allocate_func) (1 + np->ip_size);
+          strcpy (str, uppercase ? MPFR_NAN_STRING_UC : MPFR_NAN_STRING_LC);
+          np->ip_ptr = register_string (np->sl, str);
         }
       else if (MPFR_IS_INF (p))
         {
@@ -1502,24 +1492,14 @@ partition_number (struct number_parts *np, mpfr_srcptr p,
           if (MPFR_IS_NEG (p))
             np->sign = '-';
 
-          if (uppercase)
-            {
-              np->ip_size = MPFR_INF_STRING_LENGTH;
-              str = (char *) (*__gmp_allocate_func) (1 + np->ip_size);
-              strcpy (str, MPFR_INF_STRING_UC);
-              np->ip_ptr = register_string (np->sl, str);
-            }
-          else
-            {
-              np->ip_size = MPFR_INF_STRING_LENGTH;
-              str = (char *) (*__gmp_allocate_func) (1 + np->ip_size);
-              strcpy (str, MPFR_INF_STRING_LC);
-              np->ip_ptr = register_string (np->sl, str);
-            }
+          np->ip_size = MPFR_INF_STRING_LENGTH;
+          str = (char *) (*__gmp_allocate_func) (1 + np->ip_size);
+          strcpy (str, uppercase ? MPFR_INF_STRING_UC : MPFR_INF_STRING_LC);
+          np->ip_ptr = register_string (np->sl, str);
         }
       else
-        /* p == 0 */
         {
+          MPFR_ASSERTD (MPFR_IS_ZERO (p));
           /* note: for 'g' spec, zero is always displayed with 'f'-style with
              precision spec.prec - 1 and the trailing zeros are removed unless
              the flag '#' is used. */
@@ -1573,8 +1553,8 @@ partition_number (struct number_parts *np, mpfr_srcptr p,
         }
     }
   else
-    /* regular p, p != 0 */
     {
+      MPFR_ASSERTD (MPFR_IS_PURE_FP (p));
       if (spec.spec == 'a' || spec.spec == 'A' || spec.spec == 'b')
         {
           if (regular_ab (np, p, spec) == -1)
