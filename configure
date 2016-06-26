@@ -16031,11 +16031,11 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
 
 if test "$enable_float128" != no; then
-   { $as_echo "$as_me:${as_lineno-$LINENO}: checking if compiler knows __float128" >&5
-$as_echo_n "checking if compiler knows __float128... " >&6; }
+   { $as_echo "$as_me:${as_lineno-$LINENO}: checking if compiler knows __float128 with C99 constants" >&5
+$as_echo_n "checking if compiler knows __float128 with C99 constants... " >&6; }
    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-__float128 x;
+__float128 x = 0x1.fp+16383q;
 int
 main ()
 {
@@ -16054,7 +16054,7 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
        if test "$enable_float128" = yes; then
-          as_fn_error $? "compiler doesn't know __float128
+          as_fn_error $? "compiler doesn't know __float128 with C99 constants
 Please use another compiler or build MPFR without --enable-float128." "$LINENO" 5
        fi
 fi
