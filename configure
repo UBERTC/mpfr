@@ -17050,6 +17050,28 @@ _ACEOF
 fi
 done
 
+for ac_func in __gmpn_invert_limb
+do :
+  ac_fn_c_check_func "$LINENO" "__gmpn_invert_limb" "ac_cv_func___gmpn_invert_limb"
+if test "x$ac_cv_func___gmpn_invert_limb" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE___GMPN_INVERT_LIMB 1
+_ACEOF
+
+fi
+done
+
+for ac_func in __gmpn_rsblsh_n
+do :
+  ac_fn_c_check_func "$LINENO" "__gmpn_rsblsh_n" "ac_cv_func___gmpn_rsblsh_n"
+if test "x$ac_cv_func___gmpn_rsblsh_n" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE___GMPN_RSBLSH_N 1
+_ACEOF
+
+fi
+done
+
 
 
 
