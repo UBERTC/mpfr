@@ -29,6 +29,8 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 /* If the precisions are the same, we want to test both mpfr_add1sp
    and mpfr_add1. */
 
+/* FIXME: modify check() to test the ternary value and the flags. */
+
 static int usesp;
 
 static int
@@ -475,9 +477,11 @@ check_inexact (void)
   mpfr_set_prec (u, 33);
   mpfr_set_str_binary (u, "0.101110100101101100000000111100000E-1");
   mpfr_set_prec (y, 31);
-  if ((inexact = test_add (y, x, u, MPFR_RNDN)))
+  inexact = test_add (y, x, u, MPFR_RNDN);
+
+  if (inexact != 0)
     {
-      printf ("Wrong inexact flag (2): expected 0, got %d\n", inexact);
+      printf ("Wrong ternary value (2): expected 0, got %d\n", inexact);
       exit (1);
     }
 
@@ -486,64 +490,70 @@ check_inexact (void)
   mpfr_set_prec (u, 33);
   mpfr_set_str_binary (u, "0.101110100101101100000000111100000E-1");
   mpfr_set_prec (y, 28);
-  if ((inexact = test_add (y, x, u, MPFR_RNDN)))
+  inexact = test_add (y, x, u, MPFR_RNDN);
+
+  if (inexact != 0)
     {
-      printf ("Wrong inexact flag (1): expected 0, got %d\n", inexact);
+      printf ("Wrong ternary value (1): expected 0, got %d\n", inexact);
       exit (1);
     }
 
-  for (px=2; px<MAX_PREC; px++)
+  for (px = 2; px < MAX_PREC; px++)
     {
       mpfr_set_prec (x, px);
+
       do
         {
           mpfr_urandomb (x, RANDS);
         }
       while (mpfr_cmp_ui (x, 0) == 0);
-      for (pu=2; pu<MAX_PREC; pu++)
+
+      for (pu = 2; pu < MAX_PREC; pu++)
         {
           mpfr_set_prec (u, pu);
+
           do
             {
               mpfr_urandomb (u, RANDS);
             }
           while (mpfr_cmp_ui (u, 0) == 0);
-          {
-              py = MPFR_PREC_MIN + (randlimb () % (MAX_PREC - 1));
-              mpfr_set_prec (y, py);
-              pz =  (mpfr_cmpabs (x, u) >= 0) ? MPFR_EXP(x) - MPFR_EXP(u)
-                : MPFR_EXP(u) - MPFR_EXP(x);
-              /* x + u is exactly representable with precision
-                 abs(EXP(x)-EXP(u)) + max(prec(x), prec(u)) + 1 */
-              pz = pz + MAX(MPFR_PREC(x), MPFR_PREC(u)) + 1;
-              mpfr_set_prec (z, pz);
-              rnd = RND_RAND ();
-              if (test_add (z, x, u, rnd))
-                {
-                  printf ("z <- x + u should be exact\n");
-                  printf ("x="); mpfr_dump (x);
-                  printf ("u="); mpfr_dump (u);
-                  printf ("z="); mpfr_dump (z);
-                  exit (1);
-                }
-                {
-                  rnd = RND_RAND ();
-                  inexact = test_add (y, x, u, rnd);
-                  cmp = mpfr_cmp (y, z);
-                  if (((inexact == 0) && (cmp != 0)) ||
-                      ((inexact > 0) && (cmp <= 0)) ||
-                      ((inexact < 0) && (cmp >= 0)))
-                    {
-                      printf ("Wrong inexact flag for rnd=%s\n",
-                              mpfr_print_rnd_mode(rnd));
-                      printf ("expected %d, got %d\n", cmp, inexact);
-                      printf ("x="); mpfr_dump (x);
-                      printf ("u="); mpfr_dump (u);
-                      printf ("y=  "); mpfr_dump (y);
-                      printf ("x+u="); mpfr_dump (z);
-                      exit (1);
-                    }
-                }
+
+          py = MPFR_PREC_MIN + (randlimb () % (MAX_PREC - 1));
+          mpfr_set_prec (y, py);
+          pz = mpfr_cmpabs (x, u) >= 0 ?
+            MPFR_EXP(x) - MPFR_EXP(u) :
+            MPFR_EXP(u) - MPFR_EXP(x);
+          /* x + u is exactly representable with precision
+             abs(EXP(x)-EXP(u)) + max(prec(x), prec(u)) + 1 */
+          pz = pz + MAX(MPFR_PREC(x), MPFR_PREC(u)) + 1;
+          mpfr_set_prec (z, pz);
+
+          rnd = RND_RAND ();
+          inexact = test_add (z, x, u, rnd);
+          if (inexact != 0)
+            {
+              printf ("z <- x + u should be exact\n");
+              printf ("x="); mpfr_dump (x);
+              printf ("u="); mpfr_dump (u);
+              printf ("z="); mpfr_dump (z);
+              exit (1);
+            }
+
+          rnd = RND_RAND ();
+          inexact = test_add (y, x, u, rnd);
+          cmp = mpfr_cmp (y, z);
+          if ((inexact == 0 && cmp != 0) ||
+              (inexact > 0 && cmp <= 0) ||
+              (inexact < 0 && cmp >= 0))
+            {
+              printf ("Wrong ternary value for rnd=%s\n",
+                      mpfr_print_rnd_mode (rnd));
+              printf ("expected %d, got %d\n", cmp, inexact);
+              printf ("x="); mpfr_dump (x);
+              printf ("u="); mpfr_dump (u);
+              printf ("y=  "); mpfr_dump (y);
+              printf ("x+u="); mpfr_dump (z);
+              exit (1);
             }
         }
     }
@@ -621,37 +631,76 @@ static void
 check_overflow (void)
 {
   mpfr_t a, b, c;
-  mpfr_prec_t prec_a;
-  int r;
+  mpfr_prec_t prec_a, prec_b, prec_c;
+  int r, up;
 
-  mpfr_init2 (a, 256);
-  mpfr_init2 (b, 256);
-  mpfr_init2 (c, 256);
+  mpfr_init (a);
+  mpfr_init (b);
+  mpfr_init (c);
 
-  mpfr_set_ui (b, 1, MPFR_RNDN);
-  mpfr_setmax (b, mpfr_get_emax ());
-  mpfr_set_ui (c, 1, MPFR_RNDN);
-  mpfr_set_exp (c, mpfr_get_emax () - 192);
   RND_LOOP(r)
-    for (prec_a = 128; prec_a < 512; prec_a += 64)
-      {
-        mpfr_set_prec (a, prec_a);
-        mpfr_clear_overflow ();
-        test_add (a, b, c, (mpfr_rnd_t) r);
-        if (!mpfr_overflow_p ())
+    for (prec_a = 2; prec_a <= 128; prec_a += 2)
+      for (prec_b = 2; prec_b <= 128; prec_b += 2)
+        for (prec_c = 2; prec_c <= 128; prec_c += 2)
           {
-            printf ("No overflow in check_overflow\n");
-            exit (1);
-          }
-      }
+            mpfr_set_prec (a, prec_a);
+            mpfr_set_prec (b, prec_b);
+            mpfr_set_prec (c, prec_c);
 
+            mpfr_setmax (b, mpfr_get_emax ());
+
+            up = r == MPFR_RNDA || r == MPFR_RNDU || r == MPFR_RNDN;
+
+            /* set c with overlap with bits of b: will always overflow */
+            mpfr_set_ui_2exp (c, 1, mpfr_get_emax () - prec_b / 2, MPFR_RNDN);
+            mpfr_nextbelow (c);
+            mpfr_clear_overflow ();
+            test_add (a, b, c, (mpfr_rnd_t) r);
+            if (!mpfr_overflow_p () || (up && !mpfr_inf_p (a)))
+              {
+                printf ("No overflow (1) in check_overflow for rnd=%s\n",
+                        mpfr_print_rnd_mode ((mpfr_rnd_t) r));
+                printf ("b="); mpfr_dump (b);
+                printf ("c="); mpfr_dump (c);
+                printf ("a="); mpfr_dump (a);
+                exit (1);
+              }
+
+            if (r == MPFR_RNDZ || r == MPFR_RNDD || prec_a >= prec_b + prec_c)
+              continue;
+
+            /* set c to 111...111 so that ufp(c) = 1/2 ulp(b): will only overflow
+               when prec_a < prec_b + prec_c, and rounding up or to nearest */
+            mpfr_set_ui_2exp (c, 1, mpfr_get_emax () - prec_b, MPFR_RNDN);
+            mpfr_nextbelow (c);
+            mpfr_clear_overflow ();
+            test_add (a, b, c, (mpfr_rnd_t) r);
+            /* b + c is exactly representable iff prec_a >= prec_b + prec_c */
+            if (!mpfr_overflow_p () || !mpfr_inf_p (a))
+              {
+                printf ("No overflow (2) in check_overflow for rnd=%s\n",
+                        mpfr_print_rnd_mode ((mpfr_rnd_t) r));
+                printf ("b="); mpfr_dump (b);
+                printf ("c="); mpfr_dump (c);
+                printf ("a="); mpfr_dump (a);
+                exit (1);
+              }
+          }
+
+  mpfr_set_prec (b, 256);
+  mpfr_setmax (b, mpfr_get_emax ());
+  mpfr_set_prec (c, 256);
+  mpfr_set_ui (c, 1, MPFR_RNDN);
   mpfr_set_exp (c, mpfr_get_emax () - 512);
   mpfr_set_prec (a, 256);
   mpfr_clear_overflow ();
-  test_add (a, b, c, MPFR_RNDU);
+  mpfr_add (a, b, c, MPFR_RNDU);
   if (!mpfr_overflow_p ())
     {
-      printf ("No overflow in check_overflow\n");
+      printf ("No overflow (3) in check_overflow\n");
+      printf ("b="); mpfr_dump (b);
+      printf ("c="); mpfr_dump (c);
+      printf ("a="); mpfr_dump (a);
       exit (1);
     }
 

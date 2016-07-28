@@ -644,6 +644,10 @@ static double double_zero = 0.0;
    Otherwise (e.g. in base 10), we get an upper bound of the
    precision, and correct rounding isn't currently provided.
 */
+
+/* Definitions are enabled only if <float.h> is included. */
+#if defined (FLT_RADIX)
+
 #if defined(LDBL_MANT_DIG) && FLT_RADIX == 2
 # define MPFR_LDBL_MANT_DIG LDBL_MANT_DIG
 #else
@@ -652,9 +656,6 @@ static double double_zero = 0.0;
 #endif
 #define MPFR_LIMBS_PER_LONG_DOUBLE \
   ((sizeof(long double)-1)/sizeof(mp_limb_t)+1)
-
-/* This is standardized by IEEE 754-2008. */
-#define IEEE_FLOAT128_MANT_DIG 113
 
 /* LONGDOUBLE_NAN_ACTION executes the code "action" if x is a NaN. */
 
@@ -750,6 +751,16 @@ typedef union {
 #define MPFR_LIMBS_PER_LONG_DOUBLE ((64-1)/GMP_NUMB_BITS+1)
 
 #endif
+
+#endif  /* long double macros and typedef */
+
+
+/******************************************************
+ ****************  __float128 support  ****************
+ ******************************************************/
+
+/* This is standardized by IEEE 754-2008. */
+#define IEEE_FLOAT128_MANT_DIG 113
 
 
 /******************************************************
@@ -881,7 +892,7 @@ typedef uintmax_t mpfr_ueexp_t;
 # define MPFR_SET_INVALID_EXP(x)  ((void) 0)
 #endif
 
-#define MPFR_EXP_LESS_P(x,y) \
+#define MPFR_UBF_EXP_LESS_P(x,y) \
   (MPFR_UNLIKELY (MPFR_IS_UBF (x) || MPFR_IS_UBF (y)) ? \
    mpfr_ubf_exp_less_p (x, y) : MPFR_GET_EXP (x) < MPFR_GET_EXP (y))
 

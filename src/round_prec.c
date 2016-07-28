@@ -148,26 +148,30 @@ mpfr_can_round (mpfr_srcptr b, mpfr_exp_t err, mpfr_rnd_t rnd1,
    power of 2. */
 
 int
-mpfr_can_round_raw (const mp_limb_t *bp, mp_size_t bn, int neg, mpfr_exp_t err0,
+mpfr_can_round_raw (const mp_limb_t *bp, mp_size_t bn, int neg, mpfr_exp_t err,
                     mpfr_rnd_t rnd1, mpfr_rnd_t rnd2, mpfr_prec_t prec)
 {
-  mpfr_prec_t err, prec0 = prec;
+  mpfr_prec_t prec2;
   mp_size_t k, k1, tn;
   int s, s1;
   mp_limb_t cc, cc2;
   mp_limb_t *tmp;
   MPFR_TMP_DECL(marker);
 
+  /* Since mpfr_can_round is a function in the API, use MPFR_ASSERTN.
+     The specification makes sense only for prec >= 1. */
+  MPFR_ASSERTN (prec >= 1);
+
   MPFR_ASSERTD(bp[bn - 1] & MPFR_LIMB_HIGHBIT);
 
-  if (MPFR_UNLIKELY(err0 < 0 || (mpfr_uexp_t) err0 <= prec))
+  if (MPFR_UNLIKELY (err <= prec))
     return 0;  /* can't round */
 
   MPFR_ASSERT_SIGN(neg);
   neg = MPFR_IS_NEG_SIGN(neg);
 
   /* Transform RNDD and RNDU to Zero / Away */
-  MPFR_ASSERTD((neg == 0) || (neg == 1));
+  MPFR_ASSERTD (neg == 0 || neg == 1);
   if (rnd1 != MPFR_RNDN)
     rnd1 = MPFR_IS_LIKE_RNDZ(rnd1, neg) ? MPFR_RNDZ : MPFR_RNDA;
   if (rnd2 != MPFR_RNDN)
@@ -175,26 +179,27 @@ mpfr_can_round_raw (const mp_limb_t *bp, mp_size_t bn, int neg, mpfr_exp_t err0,
 
   if (MPFR_UNLIKELY (prec > (mpfr_prec_t) bn * GMP_NUMB_BITS))
     { /* Then prec < PREC(b): we can round:
-         (i) in rounding to the nearest iff err0 >= prec + 2
+         (i) in rounding to the nearest iff err >= prec + 2
          (ii) in directed rounding mode iff rnd1 is compatible with rnd2
-              and err0 >= prec + 1, unless b = 2^k and rnd1=rnd2=RNDA in
-              which case we need err0 >= prec + 2. */
-      if (rnd2 == MPFR_RNDN)
-        return (mpfr_uexp_t) err0 - 2 >= prec;
-      else
-        return (rnd1 == rnd2) && (mpfr_uexp_t) err0 - 2 >= prec;
+              and err >= prec + 1, unless b = 2^k and rnd1=rnd2=RNDA in
+              which case we need err >= prec + 2.
+         Use the form err - 2 >= prec to avoid a potential integer overflow.
+      */
+      return (rnd1 == rnd2 || rnd2 == MPFR_RNDN) && err - 2 >= prec;
     }
 
-  /* if the error is smaller than ulp(b), then anyway it will propagate
-     up to ulp(b) */
-  err = ((mpfr_uexp_t) err0 > (mpfr_prec_t) bn * GMP_NUMB_BITS) ?
-    (mpfr_prec_t) bn * GMP_NUMB_BITS : (mpfr_prec_t) err0;
+  {
+    /* if the error is smaller than ulp(b), then anyway it will propagate
+       up to ulp(b) */
+    mpfr_prec_t err2 = (err > (mpfr_prec_t) bn * GMP_NUMB_BITS) ?
+      (mpfr_prec_t) bn * GMP_NUMB_BITS : (mpfr_prec_t) err;
 
-  /* warning: if k = m*GMP_NUMB_BITS, consider limb m-1 and not m */
-  k = (err - 1) / GMP_NUMB_BITS;
-  MPFR_UNSIGNED_MINUS_MODULO(s, err);
-  /* the error corresponds to bit s in limb k, the most significant limb
-     being limb 0; in memory, limb k is bp[bn-1-k]. */
+    /* warning: if k = m*GMP_NUMB_BITS, consider limb m-1 and not m */
+    k = (err2 - 1) / GMP_NUMB_BITS;
+    MPFR_UNSIGNED_MINUS_MODULO(s, err2);
+    /* the error corresponds to bit s in limb k, the most significant limb
+       being limb 0; in memory, limb k is bp[bn-1-k]. */
+  }
 
   k1 = (prec - 1) / GMP_NUMB_BITS;
   MPFR_UNSIGNED_MINUS_MODULO(s1, prec);
@@ -206,7 +211,7 @@ mpfr_can_round_raw (const mp_limb_t *bp, mp_size_t bn, int neg, mpfr_exp_t err0,
      Warning! The number with updated bn may no longer be normalized. */
   k -= k1;
   bn -= k1;
-  prec -= (mpfr_prec_t) k1 * GMP_NUMB_BITS;
+  prec2 = prec - (mpfr_prec_t) k1 * GMP_NUMB_BITS;
 
   /* We can decide of the correct rounding if rnd2(b-eps) and rnd2(b+eps)
      give the same result to the target precision 'prec', i.e., if when
@@ -225,11 +230,11 @@ mpfr_can_round_raw (const mp_limb_t *bp, mp_size_t bn, int neg, mpfr_exp_t err0,
   switch (rnd1)
     {
     case MPFR_RNDZ:
-      /* Round to Zero */
+      /* rnd1 = Round to Zero */
       cc = (bp[bn - 1] >> s1) & 1;
       /* mpfr_round_raw2 returns 1 if one should add 1 at ulp(b,prec),
          and 0 otherwise */
-      cc ^= mpfr_round_raw2 (bp, bn, neg, rnd2, prec);
+      cc ^= mpfr_round_raw2 (bp, bn, neg, rnd2, prec2);
       /* cc is the new value of bit s1 in bp[bn-1] after rounding 'rnd2' */
 
       /* now round b + 2^(MPFR_EXP(b)-err) */
@@ -239,13 +244,13 @@ mpfr_can_round_raw (const mp_limb_t *bp, mp_size_t bn, int neg, mpfr_exp_t err0,
          will be detected below, with cc2 != cc */
       break;
     case MPFR_RNDN:
-      /* Round to nearest */
+      /* rnd1 = Round to nearest */
 
       /* first round b+2^(MPFR_EXP(b)-err) */
       mpn_add_1 (tmp + bn - k, bp + bn - k, k, MPFR_LIMB_ONE << s);
       /* same remark as above in case a carry occurs in mpn_add_1() */
       cc = (tmp[bn - 1] >> s1) & 1; /* gives 0 when cc=1 */
-      cc ^= mpfr_round_raw2 (tmp, bn, neg, rnd2, prec);
+      cc ^= mpfr_round_raw2 (tmp, bn, neg, rnd2, prec2);
       /* cc is the new value of bit s1 in bp[bn-1]+eps after rounding 'rnd2' */
 
     subtract_eps:
@@ -254,34 +259,40 @@ mpfr_can_round_raw (const mp_limb_t *bp, mp_size_t bn, int neg, mpfr_exp_t err0,
       /* propagate the potential borrow up to the most significant limb
          (it cannot propagate further since the most significant limb is
          at least MPFR_LIMB_HIGHBIT) */
-      for (tn = 0; tn + 1 < k1 && (cc2 != 0); tn ++)
+      for (tn = 0; tn + 1 < k1 && cc2 != 0; tn ++)
         cc2 = bp[bn + tn] == 0;
       /* We have an exponent decrease when either:
            (i) k1 = 0 and tmp[bn-1] < MPFR_LIMB_HIGHBIT
            (ii) k1 > 0 and cc <> 0 and bp[bn + tn] = MPFR_LIMB_HIGHBIT
                 (then necessarily tn = k1-1).
-         Then for directed rounding we cannot round,
-         and for rounding to nearest we cannot round when err = prec + 1.
+         Then we cannot round when (rnd1,rnd2) = (RNDZ,RNDA) or (RNDA,RNDZ),
+         or rnd1 = RNDN and rnd2 = RNDZ or RNDA,
+         and in the other cases we cannot round when err = prec + 1.
+         In other words we can round when either rnd1 = rnd2 or rnd2 = RNDN,
+         and err > prec + 1.
       */
       if (((k1 == 0 && tmp[bn - 1] < MPFR_LIMB_HIGHBIT) ||
            (k1 != 0 && cc2 != 0 && bp[bn + tn] == MPFR_LIMB_HIGHBIT)) &&
-          (rnd2 != MPFR_RNDN || err0 == prec0 + 1))
+          !((rnd1 == rnd2 || rnd2 == MPFR_RNDN) && err - 2 >= prec))
         {
           MPFR_TMP_FREE(marker);
           return 0;
         }
       break;
     default:
-      /* Round away */
+      /* rnd1 = Round away */
+      MPFR_ASSERTD (rnd1 == MPFR_RNDA);
       cc = (bp[bn - 1] >> s1) & 1;
-      cc ^= mpfr_round_raw2 (bp, bn, neg, rnd2, prec);
+      /* the mpfr_round_raw2() call below returns whether one should add 1 or
+         not for rounding */
+      cc ^= mpfr_round_raw2 (bp, bn, neg, rnd2, prec2);
       /* cc is the new value of bit s1 in bp[bn-1]+eps after rounding 'rnd2' */
 
       goto subtract_eps;
     }
 
   cc2 = (tmp[bn - 1] >> s1) & 1;
-  cc2 ^= mpfr_round_raw2 (tmp, bn, neg, rnd2, prec);
+  cc2 ^= mpfr_round_raw2 (tmp, bn, neg, rnd2, prec2);
 
   MPFR_TMP_FREE(marker);
   return cc == cc2;
