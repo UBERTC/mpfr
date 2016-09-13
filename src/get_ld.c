@@ -36,6 +36,12 @@ mpfr_get_ld (mpfr_srcptr x, mpfr_rnd_t rnd_mode)
 
 #elif defined(HAVE_LDOUBLE_IEEE_EXT_LITTLE)
 
+/* Note: The code will return a result with a 64-bit precision, even
+   if the rounding precision is only 53 bits like on FreeBSD and
+   NetBSD 6- (or with GCC's -mpc64 option to simulate this on other
+   platforms). This is consistent with how strtold behaves in these
+   cases, for instance. */
+
 /* special code for IEEE 754 little-endian extended format */
 long double
 mpfr_get_ld (mpfr_srcptr x, mpfr_rnd_t rnd_mode)
@@ -50,7 +56,7 @@ mpfr_get_ld (mpfr_srcptr x, mpfr_rnd_t rnd_mode)
   mpfr_init2 (tmp, MPFR_LDBL_MANT_DIG);
   inex = mpfr_set (tmp, x, rnd_mode);
 
-  mpfr_set_emin (-16382-63);
+  mpfr_set_emin (-16381-63); /* emin=-16444, see below */
   mpfr_set_emax (16384);
   mpfr_subnormalize (tmp, mpfr_check_range (tmp, inex, rnd_mode), rnd_mode);
   mpfr_prec_round (tmp, 64, MPFR_RNDZ); /* exact */
@@ -228,8 +234,7 @@ mpfr_get_ld_2exp (long *expptr, mpfr_srcptr src, mpfr_rnd_t rnd_mode)
   if (MPFR_UNLIKELY (MPFR_IS_SINGULAR (src)))
     return (long double) mpfr_get_d_2exp (expptr, src, rnd_mode);
 
-  tmp[0] = *src;        /* Hack copy mpfr_t */
-  MPFR_SET_EXP (tmp, 0);
+  MPFR_ALIAS (tmp, src, MPFR_SIGN (src), 0);
   ret = mpfr_get_ld (tmp, rnd_mode);
 
   if (MPFR_IS_PURE_FP(src))

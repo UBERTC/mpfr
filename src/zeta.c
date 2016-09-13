@@ -414,18 +414,36 @@ mpfr_zeta (mpfr_t z, mpfr_srcptr s, mpfr_rnd_t rnd_mode)
       /* add = 1 + floor(log(c*c*c*(13 + m1))/log(2)); */
       add = __gmpfr_ceil_log2 (c * c * c * (13.0 + m1));
       prec1 = precz + add;
+      /* FIXME: to avoid that the working precision (prec1) depends on the
+         input precision, one would need to take into account the error made
+         when s1 is not exactly 1-s when computing zeta(s1) and gamma(s1)
+         below, and also in the case y=Inf (i.e. when gamma(s1) overflows). */
       prec1 = MAX (prec1, precs1) + 10;
 
       MPFR_GROUP_INIT_4 (group, prec1, z_pre, s1, y, p);
       MPFR_ZIV_INIT (loop, prec1);
       for (;;)
         {
+          mpfr_exp_t ey;
+
           mpfr_sub (s1, __gmpfr_one, s, MPFR_RNDN); /* s1 = 1-s */
           mpfr_zeta_pos (z_pre, s1, MPFR_RNDN);   /* zeta(1-s)  */
           mpfr_gamma (y, s1, MPFR_RNDN);          /* gamma(1-s) */
           if (MPFR_IS_INF (y)) /* Zeta(s) < 0 for -4k-2 < s < -4k,
                                   Zeta(s) > 0 for -4k < s < -4k+2 */
             {
+              /* FIXME: An overflow in gamma(s1) does not imply that
+                 Zeta(s) will overflow. In this branch, compute the
+                 log to avoid intermediate overflows? To avoid a
+                 problem at the overflow boundary, a scaling can
+                 also be done without any cost here since the log(2)
+                 already appears in the expression: compute
+                 log(...) - log(2), then the exponential, round
+                 correctly, then multiply by 2 (exact, with possible
+                 overflow generation).
+                 Note: in theory, an underflow is even possible, but
+                 only if mpfr_sin underflows, but probably not possible
+                 in practice due to the limited precision. */
               mpfr_div_2ui (s1, s, 2, MPFR_RNDN); /* s/4, exact */
               mpfr_frac (s1, s1, MPFR_RNDN); /* exact, -1 < s1 < 0 */
               overflow = (mpfr_cmp_si_2exp (s1, -1, -1) > 0) ? -1 : 1;
@@ -446,12 +464,18 @@ mpfr_zeta (mpfr_t z, mpfr_srcptr s, mpfr_rnd_t rnd_mode)
           mpfr_mul (y, s, p, MPFR_RNDN);
           mpfr_div_2ui (p, y, 1, MPFR_RNDN);      /* p = s*Pi/2 */
           /* FIXME: sinpi will be available, we should replace the mpfr_sin
-             call below by mpfr_sinpi(s/2), where s/2 will be exact */
+             call below by mpfr_sinpi(s/2), where s/2 will be exact.
+             Can mpfr_sin underflow? Moreover, the code below should be
+             improved so that the "if" condition becomes unlikely, e.g.
+             by taking a slightly larger working precision. */
           mpfr_sin (y, p, MPFR_RNDN);             /* y = sin(Pi*s/2) */
-          if (MPFR_GET_EXP(y) < 0) /* take account of cancellation in sin(p) */
+          ey = MPFR_GET_EXP (y);
+          if (ey < 0) /* take account of cancellation in sin(p) */
             {
               mpfr_t t;
-              mpfr_init2 (t, prec1 - MPFR_GET_EXP(y));
+
+              MPFR_ASSERTN (- ey < MPFR_PREC_MAX - prec1);
+              mpfr_init2 (t, prec1 - ey);
               mpfr_const_pi (t, MPFR_RNDD);
               mpfr_mul (t, s, t, MPFR_RNDN);
               mpfr_div_2ui (t, t, 1, MPFR_RNDN);
