@@ -1,6 +1,6 @@
 /* mpfr_exp -- exponential of a floating-point number
 
-Copyright 1999-2016 Free Software Foundation, Inc.
+Copyright 1999-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -75,7 +75,7 @@ mpfr_exp (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
   if (MPFR_UNLIKELY (mpfr_get_emax() != previous_emax))
     {
       /* Recompute the emax bound */
-      mp_limb_t e_limb[(sizeof (mpfr_exp_t) - 1) / MPFR_BYTES_PER_MP_LIMB + 1];
+      mp_limb_t e_limb[MPFR_EXP_LIMB_SIZE];
       mpfr_t e;
 
       /* We extend the exponent range and save the flags. */
@@ -103,13 +103,14 @@ mpfr_exp (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
   /* emin bound is cached. Check if the value in cache is ok */
   if (MPFR_UNLIKELY (mpfr_get_emin() != previous_emin))
     {
-      mp_limb_t e_limb[(sizeof (mpfr_exp_t) - 1) / MPFR_BYTES_PER_MP_LIMB + 1];
+      mp_limb_t e_limb[MPFR_EXP_LIMB_SIZE];
       mpfr_t e;
 
       /* We extend the exponent range and save the flags. */
       MPFR_SAVE_EXPO_MARK (expo);
 
-      MPFR_TMP_INIT1(e_limb, e, sizeof (mpfr_exp_t) * CHAR_BIT);
+      /* avoid using a full limb since arithmetic might be slower */
+      MPFR_TMP_INIT1(e_limb, e, sizeof (mpfr_exp_t) * CHAR_BIT - 1);
       MPFR_TMP_INIT1(bound_emin_limb, bound_emin, 32);
 
       inexact = mpfr_set_exp_t (e, expo.saved_emin, MPFR_RNDN);

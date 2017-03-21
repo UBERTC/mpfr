@@ -1,6 +1,6 @@
 /* Test file for mpfr_factorial.
 
-Copyright 2001-2016 Free Software Foundation, Inc.
+Copyright 2001-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -247,7 +247,7 @@ main (int argc, char *argv[])
                       {
                         printf ("Wrong inexact flag: expected inexact\n");
                         printf ("n=%u prec=%u\n", n, prec);
-                        mpfr_print_binary(z); puts ("");
+                        mpfr_dump (z);
                         exit (1);
                       }
                   }

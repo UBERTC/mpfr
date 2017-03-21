@@ -1,6 +1,6 @@
 /* Test file for mpfr_pow_z -- power function x^z with z a MPZ
 
-Copyright 2005-2016 Free Software Foundation, Inc.
+Copyright 2005-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -25,7 +25,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 #include "mpfr-test.h"
 
-#define ERROR(str) do { printf("Error for "str"\n"); exit (1); } while (0)
+#define ERROR(str) do { printf ("Error for " str "\n"); exit (1); } while (0)
 
 static void
 check_special (void)
@@ -302,28 +302,22 @@ static void
 bug20080223 (void)
 {
   mpfr_t a, exp, answer;
-  mpfr_exp_t emin = mpfr_get_emin ();
 
-  mpfr_set_emin (mpfr_get_emin_min ());
-  if (mpfr_get_emin () <= -1073741823)
-    {
-      mpfr_init2 (a, 53);
-      mpfr_init2 (exp, 53);
-      mpfr_init2 (answer, 53);
+  mpfr_init2 (a, 53);
+  mpfr_init2 (exp, 53);
+  mpfr_init2 (answer, 53);
 
-      mpfr_set_si (exp, -1073741824, MPFR_RNDN);
+  mpfr_set_si (exp, -1073741824, MPFR_RNDN);
 
-      mpfr_set_str (a, "1.999999999", 10, MPFR_RNDN);
-      /* a = 562949953139837/2^48 */
-      mpfr_pow (answer, a, exp, MPFR_RNDN);
-      mpfr_set_str_binary (a, "0.110110101111011001110000111111100011101000111011101E-1073741823");
-      MPFR_ASSERTN(mpfr_cmp0 (answer, a) == 0);
+  mpfr_set_str (a, "1.999999999", 10, MPFR_RNDN);
+  /* a = 562949953139837/2^48 */
+  mpfr_pow (answer, a, exp, MPFR_RNDN);
+  mpfr_set_str_binary (a, "0.110110101111011001110000111111100011101000111011101E-1073741823");
+  MPFR_ASSERTN(mpfr_cmp0 (answer, a) == 0);
 
-      mpfr_clear (a);
-      mpfr_clear (exp);
-      mpfr_clear (answer);
-    }
-  mpfr_set_emin (emin);
+  mpfr_clear (a);
+  mpfr_clear (exp);
+  mpfr_clear (answer);
 }
 
 static void

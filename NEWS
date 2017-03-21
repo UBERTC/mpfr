@@ -1,4 +1,4 @@
-Copyright 2000-2016 Free Software Foundation, Inc.
+Copyright 2000-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -20,12 +20,13 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 ##############################################################################
 
-Changes from versions 3.1.* to version 3.2.0:
+Changes from versions 3.1.* to version 4.0.0:
 - The "dinde aux marrons" release.
 - MPFR now depends on GMP 5.0+ instead of 4.1+.
 - Mini-gmp support via the --enable-mini-gmp configure option (experimental).
 - The minimum precision MPFR_PREC_MIN is now 1, with rounding defined as
   in the next IEEE 754 revision (ties rounded away from zero).
+- Shared caches for multithread applications.
 - New functions: mpfr_fpif_export and mpfr_fpif_import to export and import
   numbers in a floating-point interchange format, independent both on the
   number of bits per word and on the endianness.
@@ -35,7 +36,7 @@ Changes from versions 3.1.* to version 3.2.0:
   mpfr_flags_save and mpfr_flags_restore to operate on groups of flags.
 - New functions mpfr_set_float128 and mpfr_get_float128 to convert from/to
   the __float128 type (requires --enable-float128 and compiler support).
-- New function mpfr_buildopt_float128_p.
+- New functions mpfr_buildopt_float128_p and mpfr_buildopt_sharedcache_p.
 - New functions mpfr_rint_roundeven and mpfr_roundeven, completing the
   other similar round-to-integer functions for rounding to nearest with
   the even-rounding rule.
@@ -45,7 +46,8 @@ Changes from versions 3.1.* to version 3.2.0:
   following normal and exponential distributions respectively.
 - New functions mpfr_fmma and mpfr_fmms to compute a*b+c*d and a*b-c*d.
 - New functions mpfr_log_ui to compute the logarithm of an integer,
-  and mpfr_gamma_inc for the incomplete Gamma function.
+  mpfr_gamma_inc for the incomplete Gamma function, and mpfr_beta for the
+  Beta function.
 - The mpfr_eint function now returns the value of the E1/eint1 function
   for negative argument.
 - The behavior of the mpfr_set_exp function changed, as it could easily
@@ -56,10 +58,11 @@ Changes from versions 3.1.* to version 3.2.0:
   old one could take all the memory and/or crash with inputs of different
   magnitudes in case of huge cancellation or table maker's dilemma). The
   sign of an exact zero result is now specified, and the return value is
-  now the usual ternary value.
+  now the usual ternary value. Note that the position of "const" in the
+  mpfr_sum prototype has been fixed (the manual was correct); user code
+  should not be affected.
 - Internally, improved caching: a minimum of 10% increase of the precision
   is guaranteed to avoid too many recomputations; added mpz_t caching.
-  [TODO: add shared caches.]
 - Added configure option --enable-assert=none to avoid checking any assertion.
 - The --enable-decimal-float configure option no longer requires
   --with-gmp-build, and support for decimal floats is now automatically
@@ -69,6 +72,12 @@ Changes from versions 3.1.* to version 3.2.0:
 - Dropped K&R C compatibility.
 - Improved MPFR manual.
 - New MPFRbench program (see the tools/bench directory).
+- Major speedup in mpfr_add, mpfr_sub, mpfr_mul, mpfr_div and mpfr_sqrt when
+  all operands have the same precision and this precision is less than the
+  number of bits per word, e.g., less than 64 on a 64-bit computer.
+- Major speedup in mpfr_add, mpfr_sub and mpfr_mul when all operands have the
+  same precision and this precision is less than two words, e.g., at most 127
+  on a 64-bit computer.
 - Speedup by a factor of almost 2 in the double <--> mpfr conversions
   (mpfr_set_d and mpfr_get_d).
 - Speedup in the mpfr_const_euler function (contributed by Fredrik Johansson),
@@ -77,8 +86,12 @@ Changes from versions 3.1.* to version 3.2.0:
   and mpfr_fms.
 - Bug fixes. In particular: a speed improvement when the --enable-assert
   or --enable-assert=full configure option is used with GCC; mpfr_get_str
-  now sets the NaN flag on NaN input.
+  now sets the NaN flag on NaN input and the inexact flag when the conversion
+  is inexact. For a full list, see http://www.mpfr.org/mpfr-3.1.5/#fixed
+  and the same section for any previous 3.1.x version (follow the links
+  in the "Changes..." sections).
 - MinGW (MS Windows): Added support for thread-safe DLL (shared library).
+- Limited pkg-config support.
 
 Changes from versions 3.0.* to version 3.1.0:
 - The "canard à l'orange" release.

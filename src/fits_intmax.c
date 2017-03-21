@@ -1,6 +1,6 @@
 /* mpfr_fits_intmax_p -- test whether an mpfr fits an intmax_t.
 
-Copyright 2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 2004, 2006-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -41,7 +41,7 @@ mpfr_fits_intmax_p (mpfr_srcptr f, mpfr_rnd_t rnd)
   int res;
 
   if (MPFR_UNLIKELY (MPFR_IS_SINGULAR (f)))
-    /* Zero always fit */
+    /* Zero always fits */
     return MPFR_IS_ZERO (f) ? 1 : 0;
 
   /* now it fits if either

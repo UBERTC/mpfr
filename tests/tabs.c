@@ -1,6 +1,6 @@
 /* Test file for mpfr_abs.
 
-Copyright 2000-2016 Free Software Foundation, Inc.
+Copyright 2000-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -61,9 +61,9 @@ check_inexact (void)
                 {
                   printf ("Wrong inexact flag: expected %d, got %d\n",
                           cmp, inexact);
-                  printf ("x="); mpfr_print_binary (x); puts ("");
-                  printf ("absx="); mpfr_print_binary (absx); puts ("");
-                  printf ("y="); mpfr_print_binary (y); puts ("");
+                  printf ("x="); mpfr_dump (x);
+                  printf ("absx="); mpfr_dump (absx);
+                  printf ("y="); mpfr_dump (y);
                   exit (1);
                 }
             }
@@ -161,7 +161,6 @@ check_cmp (int argc, char *argv[])
 int
 main (int argc, char *argv[])
 {
-  mpfr_test_init ();
   tests_start_mpfr ();
 
   check_inexact ();

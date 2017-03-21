@@ -1217,28 +1217,8 @@ who named it ``concurrent series'' in \cite{Smith91}.)
 The logarithm function \verb!mpfr_log! is defined using this
 approximated formula~\cite{Muller97} based on the arithmetic-geometric
 mean (denoted by AG):
-$$ \log x \approx \frac{\pi}{\mbox{2~AG(1,4/s)}} - m \log 2  + o(\log x ~2^{-p})$$
-with $ s = x \cdot 2^m > 2^{p/2}$.\\
-
-
-First, the arithmetic-geometric mean $\mbox{AG}(u_0,v_0)$ is computed as in
-mathematics with rounding to nearest:
-$$ {\tilde u_{n+1}} = {\mathcal N} \left( \sqrt{{\mathcal N}({\tilde u_n}~{\tilde v_n})}~\right) \qquad
- {\tilde v_{n+1}} = \frac{{\mathcal N} ({\tilde u_n} + {\tilde v_n})}{2} $$
-
-We denote by $u_n$ and $v_n$ the exact mathematical values. By
-induction, it can be proved that:
-$$ u_n~ {\left(1-\frac{\ulp(1)}{2}\right)}^{\frac{3}{2}n+1} \leq {\tilde u_n} \leq  u_n~ {\left(1+\frac{\ulp(1)}{2}\right)}^{\frac{3}{2}n+1}$$
-$$ v_n~ {\left(1-\frac{\ulp(1)}{2}\right)}^{\frac{3}{2}n+1} \leq {\tilde v_n} \leq  {\tilde v_n}~ {\left(1+\frac{\ulp(1)}{2}\right)}^{\frac{3}{2}n+1}$$
-
-Then, if $n \ge \lceil \log \left( \frac{v_0 - u_0}{2~u_0}\right) \rceil$,
-$$\frac{|{\tilde v_n} - AG(u_0,v_0)|}{v_0} \le n~2^{\frac{3}{2}n+2-p}+8 \cdot 4^{- \frac{2^n~u_0}{v_0 - u_0}}.$$
-Therefore the arithmetic-geometric mean can be computed using the
-previous error bound and the \verb!mpfr_can_round! function. It
-should be noted that the arithmetic-geometric mean of two different
-non-zero floating-point numbers is transcendental, therefore there is
-no table maker's dilemma here.
-
+\[ \log x \approx \frac{\pi}{\mbox{2~AG(1,4/s)}} - m \log 2  + o(\log x ~2^{-p}) \]
+with $s = x \cdot 2^m > 2^{p/2}$.
 
 From the arithmetic-geometric mean, we deduce the logarithm, naively
 bounding the round-off errors. The only point is that the subtraction
@@ -2933,7 +2913,7 @@ with $c_u^* = 1$ for $(\bullet)$
 
 
 That shows the rounding error on the calculation of $x^y$
-can be bound by $1 + 3 \cdot 2^{\Exp(v)+1}$ ulps on the result. So,
+can be bounded by $1 + 3 \cdot 2^{\Exp(v)+1}$ ulps on the result. So,
 to calculate the size of intermediary variables, we have to add, at
 least, $\lceil \log_2 (1+3 \cdot 2^{\Exp(v)+1}) \rceil$ bits to the wanted
 precision.
@@ -3263,14 +3243,35 @@ of Eq.~(\ref{eq:legendre_cf}) is bounded by
 
 \subsection{The Riemann Zeta function}
 
-The algorithm for the Riemann Zeta function is due to Jean-Luc R\'emy
-and Sapphorain P\'etermann \cite{PeRe06,PeRe07}. For $s < 1/2$ we use the
-functional equation
-\[ \zeta(s) = 2^s \pi^{s-1} \sin\left(\frac{\pi s}{2}\right) \Gamma(1-s)
-   \zeta(1-s) \]
-(in that case, one should take care of cancellation when $\sin(\pi s/2)$ is
-small, i.e., when $s$ is near an even negative integer).
-For $s \geq 1/2$ we use the Euler-MacLaurin summation formula, applied
+\subsubsection{Special cases}
+
+As usual, special inputs are first taken into account: NaN, infinities,
+zeros, but also values close enough to $0$ (see below), even negative
+integers, and $1$ (pole).
+
+Let us focus on $\zeta(s)$, where $s$ has a small exponent.
+In theory, this case could be handled by the reflection formula
+(\textsection\ref{zeta:reflection}), but as the term $\zeta(1-s)$
+of this formula is close to the pole of $\zeta$ at $1$, this method would
+be slow (and could even yield an internal overflow for tiny $s$), while
+the correctly rounded result can be determined very quickly when $s$ is
+close enough to $0$. We have around $0$:
+\[ \zeta(s) = -\frac{1}{2} - \frac{1}{2} \log(2 \pi) s + \ldots \]
+and for $|s| \leq 2^{-4}$, we have $|\zeta(s) + 1/2| \leq |s|$. Thus
+if $|s| \leq 2^{-4}$ and $|s| \leq \frac{1}{4} \ulp(1/2)$ in the target
+precision $p$, we can deduce the correct rounding for any rounding mode.
+The second condition can be rewritten: $|s| \leq 2^{-2-p}$. For $p \geq 2$,
+the second condition implies the first one, and it is sufficient to have
+$\Exp(s) \leq -2-p$. For $p = 1$, if we assume $\Exp(s) \leq -2-p$, then
+$|s| \leq \frac{1}{2} 2^{-2-p} = 2^{-4}$, so that both conditions are
+also satisfied. Thus, for any target precision $p \geq 1$, a sufficient
+condition is $\Exp(s) \leq -2-p$, or equivalently $\Exp(s) + 1 < -p$.
+
+\subsubsection{Case $s \geq 1/2$}
+
+The algorithm for the Riemann Zeta function for $s \geq 1/2$ is due to
+Jean-Luc R\'emy and Sapphorain P\'etermann \cite{PeRe06,PeRe07}.
+We use the Euler-MacLaurin summation formula, applied
 to the real function $f(x) = x^{-s}$ for $s > 1$:
 \[ \zeta(s) = \sum_{k=1}^{N-1} \frac{1}{k^s} + \frac{1}{2N^s}
 + \frac{1}{(s-1)N^{s-1}} + \sum_{k=1}^p \frac{B_{2k}}{2k}
@@ -3302,7 +3303,52 @@ the approximation computed, we have
 \[ |\zeta(s) - z| \leq 2^{-\Pi} |\zeta(s)|. \]
 \end{theorem}
 
-\subsubsection{The integer argument case.}
+\subsubsection{Case $s < 1/2$}
+\label{zeta:reflection}
+
+For $s < 1/2$, we use the reflection formula:
+\[ \zeta(s) = 2^s \pi^{s-1} \sin\left(\frac{\pi s}{2}\right) \Gamma(1-s)
+   \zeta(1-s). \]
+
+For simplicity, to avoid taking into account the error from the
+$\Gamma$ and $\zeta$ inputs, we will ensure that $1-s$ is represented
+exactly. Thus its precision may need to be much larger than the target
+precision. However, for efficiency reasons, the internal working
+precision $q$ will still be based only on the target precision as usual.
+
+So, assuming that no underflows nor overflows occur, the terms
+$\Gamma(1-s)$ and $\zeta(1-s)$ will each have an error factor of
+the form $1+\theta$, with $|\theta| \leq 2^{-q}$.
+
+Assuming that $\Gamma$ and $\zeta$ have a larger complexity than
+the other terms, we would like the other error factors not to be
+significantly larger than $1+2^{-q}$. Otherwise we would have wasted
+time by computing $\Gamma(1-s)$ and $\zeta(1-s)$ with more precision
+than really needed.
+
+Concerning the term $\pi^{s-1}$, if the constant $\pi$ is represented
+by a variable $x$ with a precision $p_x$ to the nearest, then
+$(1-2^{-p_x}) x \leq \pi \leq (1+2^{-p_x}) x$. So,
+\[ (1+2^{-p_x})^{s-1} x^{s-1} \leq \pi^{s-1} \leq
+   (1-2^{-p_x})^{s-1} x^{s-1}, \]
+i.e.,
+\[ (1-2^{-p_x})^{1-s} \pi^{s-1} \leq x^{s-1} \leq
+   (1+2^{-p_x})^{1-s} \pi^{s-1}. \]
+We want $(1-s) 2^{-p_x}$ to be small and of the order of $2^{-q}$.
+We will choose $p_x = q - \Exp(1-s)$, so that $(1-s) 2^{-p_x} < 2^{-q}$.
+The value $x^{s-1}$ will be computed and rounded to the working precision
+by the \texttt{mpfr\_pow} function, giving another error term of the form
+$1+\theta$, with $|\theta| \leq 2^{-q}$.
+
+Concerning the term $\sin\left(\frac{\pi s}{2}\right)$, because of the
+factor $\pi$ in the argument, we will do the range reduction ourselves:
+it will much simpler and faster than the one in \texttt{mpfr\_sin}, and
+this will allow us to select the intermediate precision more accurately.
+
+% To be removed when complete and correctly implemented.
+(WORK IN PROGRESS -- May not correspond to the implementation yet.)
+
+\subsubsection{The integer argument case}
 In case of an integer argument $s \geq 2$,
 the \texttt{mpfr\_zeta\_ui} function computes
 $\zeta(s)$ using the following formula from \cite{Borwein95}:
@@ -3555,6 +3601,8 @@ than $(18n+51) \ulp(r)$, or twice this in the improbable case where there
 is an exponent loss in the final subtraction $r = \circ(v_{n+1}-w)$.
 
 \subsection{The Bessel functions}
+
+% see https://people.eecs.berkeley.edu/~fateman/papers/hermite.pdf
 
 \subsubsection{Bessel function $J_n(z)$ of first kind}
 
@@ -4253,7 +4301,7 @@ where
 \subsection{The Digamma Function}
 
 The Digamma function \texttt{mpfr\_digamma} is defined by:
-\[ \psi(x) = \frac{d}{dx} \log\Gamma(x), \]
+\[ \psi(x) = \frac{d}{{\mathrm d}x} \log\Gamma(x), \]
 and is computed from the asymptotic series \cite{Smith01}
 \[ \psi(x) \sim \log x - \frac{1}{2x} - \sum_{n=1}^{\infty}
    \frac{B_{2n}}{2n x^{2n}}. \]
@@ -4629,7 +4677,7 @@ $|\epsilon''| \leq 2 \epsilon + \epsilon' \leq (26 + 2^{k+7}) 2^{k-p}
 Euler's constant is computed using the formula $\gamma = S(n) - R(n) - \log n$
 where:
 \[ S(n) = \sum_{k=1}^{\infty} \frac{n^k (-1)^{k-1}}{k! k}, \quad
-   R(n) = \int_n^{\infty} \frac{\exp(-u)}{u} du \sim \frac{\exp(-n)}{n}
+   R(n) = \int_n^{\infty} \frac{\exp(-u)}{u} {\mathrm d}u \sim \frac{\exp(-n)}{n}
         \sum_{k=0}^{\infty} \frac{k!}{(-n)^k}. \]
 This identity is attributed to Sweeney by Brent \cite{Brent78}.
 (See also \cite{Smith01}.)
@@ -4702,7 +4750,7 @@ as in \cite{Brent78}:
 % and $n^{n-1}$ within at most $n-2$ ulps.
 % The division by $n^{n-1}$ and the multiplication introduce one more ulp of
 % error, thus the total error on $R'(n)$ is at most $n+2$ ulps.
-Let us introduce $I_k = \int_n^{\infty} \frac{e^{-u}}{u^k} du$.
+Let us introduce $I_k = \int_n^{\infty} \frac{e^{-u}}{u^k} {\mathrm d}u$.
 We have $R(n) = I_1$ and the recurrence $I_k = \frac{e^{-n}}{n^k} - k I_{k+1}$,
 which gives
 \[ R(n) = \frac{e^{-n}}{n} \sum_{k=0}^{n-2} \frac{k!}{(-n)^k}
@@ -4716,7 +4764,7 @@ $e^t < 1+2t$ for $0 < t < 1$, thus
 $(x!)^2 \le 2\pi x^{2x} e^{-2x} (x+\frac{1}{3})$.}
 for $n \ge 1$, we have:
 \[ |R(n) - R'(n)| = (n-1)! I_n
-        \le \frac{n!}{n} \int_n^{\infty} \frac{e^{-n}}{u^n} du
+        \le \frac{n!}{n} \int_n^{\infty} \frac{e^{-n}}{u^n} {\mathrm d}u
         \le \frac{n^{n-1}}{e^n} \sqrt{2 \pi (n+1)} \frac{e^{-n}}{(n-1)
         n^{n-1}} \]
 and since $\sqrt{2 \pi (n+1)}/(n-1) \le 1$ for $n \ge 9$:
@@ -4763,16 +4811,16 @@ $\gamma = S(n) - R(n) - \log n$ with $n$ such that $e^{-2n} \le
 \ulp(1/2) = 2^{-{\rm prec}}$, i.e.\ $n \ge {\rm prec} \frac{\log 2}{2}$:
 \begin{quote}
 $s \leftarrow S'(n)$ \\
-$l \leftarrow \log(n)$ \\
+$\ell \leftarrow \log(n)$ \\
 $r \leftarrow R'(n)$ \\
-return $(s - l) - r$
+return $(s - \ell) - r$
 \end{quote}
 Since the final result is in $[\frac{1}{2}, 1]$, and $R'(n) \le
 \frac{e^{-n}}{n}$, then $S'(n)$ approximates $\log n$.
 If the target precision is $m$, and
-we use $m + \lceil \log_2({\rm prec}) \rceil$ bits to evaluate $s$ and $l$,
-then the error on $s-l$ will be at most $3 \ulp(1/2)$,
-so the error on $(s - l) - r$ is at most $5 \ulp(1/2)$,
+we use $m + \lceil \log_2({\rm prec}) \rceil$ bits to evaluate $s$ and $\ell$,
+then the error on $s-\ell$ will be at most $3 \ulp(1/2)$,
+so the error on $(s - \ell) - r$ is at most $5 \ulp(1/2)$,
 and adding the $3 e^{-2n}$ truncation error, we get a bound of
 $8 \ulp(1/2)$.
 [\textbf{FIXME: check with new method to compute S}]

@@ -1,6 +1,6 @@
 /* Test mpfr_get_d_2exp.
 
-Copyright 1999-2016 Free Software Foundation, Inc.
+Copyright 1999-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -78,8 +78,7 @@ check_round (void)
 static void
 check_inf_nan (void)
 {
-  /* only if nans and infs are available */
-#if _GMP_IEEE_FLOATS
+#if !defined(MPFR_ERRDIVZERO)
   mpfr_t  x;
   double  d;
   long    exp;

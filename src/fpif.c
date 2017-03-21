@@ -1,7 +1,7 @@
 /* mpfr_fpif -- Binary export & import of MPFR numbers
    (floating-point interchange format)
 
-Copyright 2012-2016 Free Software Foundation, Inc.
+Copyright 2012-2017 Free Software Foundation, Inc.
 Contributed by Olivier Demengeon.
 
 This file is part of the GNU MPFR Library.
@@ -352,7 +352,7 @@ mpfr_fpif_read_exponent_from_file (mpfr_t x, FILE * fh)
       uexp += MPFR_MAX_EMBEDDED_EXPONENT;
 
       exponent = exponent_sign ? - (mpfr_exp_t) uexp : (mpfr_exp_t) uexp;
-      if (exponent < __gmpfr_emin || exponent > __gmpfr_emax)
+      if (! MPFR_EXP_IN_RANGE (exponent))
         return 1;
       MPFR_EXP (x) = exponent;
 
@@ -370,7 +370,7 @@ mpfr_fpif_read_exponent_from_file (mpfr_t x, FILE * fh)
     {
       /* FIXME: no sign set. Is this normal? Check with a testcase. */
       exponent -= MPFR_MAX_EMBEDDED_EXPONENT;
-      if (exponent < __gmpfr_emin || exponent > __gmpfr_emax)
+      if (! MPFR_EXP_IN_RANGE (exponent))
         return 1;
       MPFR_EXP (x) = exponent;
     }

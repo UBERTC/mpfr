@@ -1,6 +1,6 @@
 /* mpfr_root -- kth root.
 
-Copyright 2005-2016 Free Software Foundation, Inc.
+Copyright 2005-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -63,6 +63,8 @@ mpfr_root (mpfr_ptr y, mpfr_srcptr x, unsigned long k, mpfr_rnd_t rnd_mode)
     {
       if (k == 0)
         {
+          /* x^(1/0) = NaN since 0 is not signed, thus 1/0 might be +Inf or
+             -Inf */
           MPFR_SET_NAN (y);
           MPFR_RET_NAN;
         }

@@ -1,4 +1,4 @@
-# Copyright 2000-2016 Free Software Foundation, Inc.
+# Copyright 2000-2017 Free Software Foundation, Inc.
 # This Makefile.am is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -59,7 +59,8 @@ buildopt.c digamma.c bernoulli.c isregular.c set_flt.c get_flt.c	\
 scale2.c set_z_exp.c ai.c gammaonethird.c ieee_floats.h			\
 grandom.c fpif.c set_float128.c get_float128.c rndna.c nrandom.c        \
 random_deviate.h random_deviate.c erandom.c mpfr-mini-gmp.c             \
-mpfr-mini-gmp.h fmma.c log_ui.c gamma_inc.c
+mpfr-mini-gmp.h fmma.c log_ui.c gamma_inc.c ubf.c invert_limb.h 	\
+invsqrt_limb.h beta.c odd_p.c
 
 libmpfr_la_LIBADD = @LIBOBJS@
 
@@ -79,7 +80,7 @@ libmpfr_la_LIBADD = @LIBOBJS@
 #        2.4.x    3:x:2
 #        3.0.x    4:x:0
 #        3.1.x    5:x:1
-#        3.2.x    6:x:0
+#        4.0.x    6:x:0
 libmpfr_la_LDFLAGS = $(MPFR_LDFLAGS) $(LIBMPFR_LDFLAGS) -version-info 6:0:0
 
 # Important note: If for some reason, srcdir is read-only at build time

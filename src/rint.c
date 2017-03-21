@@ -1,6 +1,6 @@
 /* mpfr_rint -- Round to an integer.
 
-Copyright 1999-2016 Free Software Foundation, Inc.
+Copyright 1999-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -213,7 +213,7 @@ mpfr_rint (mpfr_ptr r, mpfr_srcptr u, mpfr_rnd_t rnd_mode)
           uj = un - ui;  /* lowest limb of the integer part in u */
           rj = rn - ui;  /* lowest limb of the integer part in r */
 
-          if (MPFR_LIKELY (rp != up))
+          if (rp != up)
             MPN_COPY(rp + rj, up + uj, ui);
 
           /* Ignore the lowest rj limbs, all equal to zero. */

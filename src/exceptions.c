@@ -1,6 +1,6 @@
 /* Exception flags and utilities. Constructors and destructors (debug).
 
-Copyright 2001-2016 Free Software Foundation, Inc.
+Copyright 2001-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -22,16 +22,9 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 #include "mpfr-impl.h"
 
-MPFR_THREAD_ATTR mpfr_flags_t __gmpfr_flags = 0;
-
-MPFR_THREAD_ATTR mpfr_exp_t __gmpfr_emin = MPFR_EMIN_DEFAULT;
-MPFR_THREAD_ATTR mpfr_exp_t __gmpfr_emax = MPFR_EMAX_DEFAULT;
-
-#ifdef MPFR_WIN_THREAD_SAFE_DLL
-mpfr_flags_t * __gmpfr_flags_f() { return &__gmpfr_flags; }
-mpfr_exp_t *   __gmpfr_emin_f()  { return &__gmpfr_emin; }
-mpfr_exp_t *   __gmpfr_emax_f()  { return &__gmpfr_emax; }
-#endif
+MPFR_THREAD_VAR (mpfr_flags_t, __gmpfr_flags, 0)
+MPFR_THREAD_VAR (mpfr_exp_t, __gmpfr_emin, MPFR_EMIN_DEFAULT)
+MPFR_THREAD_VAR (mpfr_exp_t, __gmpfr_emax, MPFR_EMAX_DEFAULT)
 
 #undef mpfr_get_emin
 
@@ -375,7 +368,11 @@ mpfr_erangeflag_p (void)
 /* Note: In the rounding to the nearest mode, mpfr_underflow
    always rounds away from 0. In this rounding mode, you must call
    mpfr_underflow with rnd_mode = MPFR_RNDZ if the exact result
-   is <= 2^(emin-2) in absolute value. */
+   is <= 2^(emin-2) in absolute value.
+   We chose the default to round away from zero instead of toward zero
+   because rounding away from zero (MPFR_RNDA) wasn't supported at that
+   time (r1910), so that the caller had no way to change rnd_mode to
+   this mode. */
 
 MPFR_COLD_FUNCTION_ATTR int
 mpfr_underflow (mpfr_ptr x, mpfr_rnd_t rnd_mode, int sign)
@@ -383,8 +380,7 @@ mpfr_underflow (mpfr_ptr x, mpfr_rnd_t rnd_mode, int sign)
   int inex;
 
   MPFR_LOG_FUNC
-    (("x[%Pu]=%.*Rg rnd=%d sign=%d", mpfr_get_prec (x), mpfr_log_prec, x,
-      rnd_mode, sign),
+    (("rnd=%d sign=%d", rnd_mode, sign),
      ("x[%Pu]=%.*Rg", mpfr_get_prec (x), mpfr_log_prec, x));
 
   MPFR_ASSERT_SIGN (sign);
@@ -412,8 +408,7 @@ mpfr_overflow (mpfr_ptr x, mpfr_rnd_t rnd_mode, int sign)
   int inex;
 
   MPFR_LOG_FUNC
-    (("x[%Pu]=%.*Rg rnd=%d sign=%d", mpfr_get_prec (x), mpfr_log_prec, x,
-      rnd_mode, sign),
+    (("rnd=%d sign=%d", rnd_mode, sign),
      ("x[%Pu]=%.*Rg", mpfr_get_prec (x), mpfr_log_prec, x));
 
   MPFR_ASSERT_SIGN (sign);

@@ -1,6 +1,6 @@
 /* tprintf.c -- test file for mpfr_printf and mpfr_vprintf
 
-Copyright 2008-2016 Free Software Foundation, Inc.
+Copyright 2008-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -428,7 +428,6 @@ test_locale (void)
   int i;
   char *s = NULL;
   mpfr_t x;
-  double y;
   int count;
 
   for(i = 0; i < numberof(tab_locale) && s == NULL; i++)
@@ -439,12 +438,11 @@ test_locale (void)
 
   mpfr_init2 (x, 113);
   mpfr_set_ui (x, 10000, MPFR_RNDN);
-  y = 100000;
 
-  count = mpfr_printf ("(1) 10000=%'Rg 100000=%'g \n", x, y);
-  check_length (10000, count, 33, d);
-  count = mpfr_printf ("(2) 10000=%'Rf 100000=%'f \n", x, y);
-  check_length (10001, count, 47, d);
+  count = mpfr_printf ("(1) 10000=%'Rg \n", x);
+  check_length (10000, count, 18, d);
+  count = mpfr_printf ("(2) 10000=%'Rf \n", x);
+  check_length (10001, count, 25, d);
 
   mpfr_clear (x);
 }

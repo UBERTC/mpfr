@@ -1,6 +1,6 @@
 /* Test file for mpfr_urandomb
 
-Copyright 1999-2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 1999-2004, 2006-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -50,7 +50,7 @@ test_urandomb (long nbtests, mpfr_prec_t prec, int verbose)
       if (MPFR_NOTZERO(x) && (MPFR_MANT(x)[0] & MPFR_LIMB_MASK(sh)))
         {
           printf ("Error: mpfr_urandomb() returns invalid numbers:\n");
-          mpfr_print_binary (x); puts ("");
+          mpfr_dump (x);
           exit (1);
         }
       d = mpfr_get_d1 (x); av += d; var += d*d;

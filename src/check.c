@@ -1,6 +1,6 @@
 /* mpfr_check -- Check if a floating-point number has not been corrupted.
 
-Copyright 2003-2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 2003-2004, 2006-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -77,8 +77,5 @@ mpfr_check (mpfr_srcptr x)
         return 0;
     }
   /* Check exponent range */
-  if (MPFR_EXP (x) < __gmpfr_emin ||
-      MPFR_EXP (x) > __gmpfr_emax)
-    return 0;
-  return 1;
+  return MPFR_EXP_IN_RANGE (MPFR_EXP (x));
 }

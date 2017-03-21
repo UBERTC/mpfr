@@ -1,6 +1,6 @@
 /* Implementations of operations between mpfr and mpz/mpq data
 
-Copyright 2001, 2003-2016 Free Software Foundation, Inc.
+Copyright 2001, 2003-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -493,7 +493,7 @@ mpfr_cmp_f (mpfr_srcptr x, mpf_srcptr z)
 
   MPFR_SAVE_EXPO_MARK (expo);
 
-  mpfr_init2 (t, MPFR_PREC_MIN + ABS(SIZ(z)) * GMP_NUMB_BITS );
+  mpfr_init2 (t, MPFR_PREC_MIN + ABSIZ(z) * GMP_NUMB_BITS);
   res = mpfr_set_f (t, z, MPFR_RNDN);
   MPFR_ASSERTD (res == 0);
   res = mpfr_cmp (x, t);

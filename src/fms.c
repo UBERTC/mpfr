@@ -1,6 +1,6 @@
 /* mpfr_fms -- Floating multiply-subtract
 
-Copyright 2001-2002, 2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 2001-2002, 2004, 2006-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -24,7 +24,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 /* The fused-multiply-subtract (fms) of x, y and z is defined by:
    fms(x,y,z)= x*y - z
-   Note: this is neither in IEEE754R, nor in LIA-2, but both the
+   Note: this is neither in IEEE 754-2008, nor in LIA-2, but both the
    PowerPC and the Itanium define fms as x*y - z.
 */
 int

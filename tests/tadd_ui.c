@@ -1,6 +1,6 @@
 /* Test file for mpfr_add_ui
 
-Copyright 2000-2016 Free Software Foundation, Inc.
+Copyright 2000-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -67,7 +67,9 @@ check_nans (void)
 
   /* nan + 2394875 == nan */
   mpfr_set_nan (x);
+  mpfr_clear_nanflag ();
   mpfr_add_ui (y, x, 2394875L, MPFR_RNDN);
+  MPFR_ASSERTN (mpfr_nanflag_p ());
   MPFR_ASSERTN (mpfr_nan_p (y));
 
   /* +inf + 2394875 == +inf */

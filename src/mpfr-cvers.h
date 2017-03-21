@@ -1,6 +1,6 @@
 /* Utilities for MPFR developers, not exported.
 
-Copyright 1999-2016 Free Software Foundation, Inc.
+Copyright 1999-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -45,7 +45,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 # define __MPFR_ICC(a,b,c) 0
 #endif
 
-#define __MPFR_MAJMIN(a,i) (((a) << 8) | (b))
+#define __MPFR_MAJMIN(a,i) (((a) << 8) | (i))
 
 #if defined(__GNUC__) && defined(__GNUC_MINOR__) && ! __MPFR_ICC(0,0,0)
 # define __MPFR_GNUC(a,i) \

@@ -1,6 +1,6 @@
 /* Uniform Interface to GMP.
 
-Copyright 2004-2016 Free Software Foundation, Inc.
+Copyright 2004-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -126,10 +126,6 @@ void *alloca (size_t);
 
 /* MP_LIMB macros */
 #define MPN_ZERO(dst, n) memset((dst), 0, (n)*MPFR_BYTES_PER_MP_LIMB)
-/* TODO: add MPFR_ASSERTD assertions for MPN_COPY_DECR and MPN_COPY_INCR,
-   even though memmove works with any overlapping. Useful to detect bugs! */
-#define MPN_COPY_DECR(dst,src,n) memmove((dst),(src),(n)*MPFR_BYTES_PER_MP_LIMB)
-#define MPN_COPY_INCR(dst,src,n) memmove((dst),(src),(n)*MPFR_BYTES_PER_MP_LIMB)
 #define MPN_COPY(dst,src,n) \
   do                                                                  \
     {                                                                 \
@@ -184,8 +180,8 @@ void *alloca (size_t);
 #endif
 
 /* ASSERT */
-__MPFR_DECLSPEC void mpfr_assert_fail _MPFR_PROTO((const char *, int,
-                                                   const char *));
+__MPFR_DECLSPEC void mpfr_assert_fail (const char *, int,
+                                       const char *);
 
 #define ASSERT_FAIL(expr)  mpfr_assert_fail (__FILE__, __LINE__, #expr)
 /* ASSERT() is for mpfr-longlong.h only. */
@@ -246,14 +242,45 @@ __MPFR_DECLSPEC extern const struct bases mpfr_bases[257];
 #undef ABS
 #undef MIN
 #undef MAX
-#undef numberof
 #define ABS(x) ((x) >= 0 ? (x) : -(x))
 #define MIN(l,o) ((l) < (o) ? (l) : (o))
 #define MAX(h,i) ((h) > (i) ? (h) : (i))
-#define numberof(x)  (sizeof (x) / sizeof ((x)[0]))
 
-/* Allocate func are defined in gmp-impl.h */
+/* Size of an array, safe version but not a constant expression:
+   Since an array can silently be converted to a pointer, we check
+   that this macro is applied on an array, not a pointer. */
+#undef numberof
+#if 0
+/* The following should work with GCC as documented in its manual,
+   but fails: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=38377#c10
+   Thus disabled for now. */
+# define numberof(x)                                                    \
+  ( __extension__ ({                                                    \
+      int is_array = (void *) &(x) == (void *) &(x)[0];                 \
+      MPFR_STAT_STATIC_ASSERT (__builtin_constant_p (is_array) ?        \
+                               is_array : 1);                           \
+      MPFR_ASSERTN (is_array);                                          \
+      numberof_const (x);                                               \
+    }) )
+#else
+# define numberof(x)                                    \
+  (MPFR_ASSERTN ((void *) &(x) == (void *) &(x)[0]),    \
+   numberof_const (x))
+#endif
 
+/* Allocate func are defined in gmp-impl.h.
+   Warning: the code below fetches the GMP memory allocation functions the first
+   time one allocates some mpfr_t, and then always uses those initial functions,
+   even if the user later changes the GMP memory allocation functions with
+   mp_set_memory_functions(). This is fine as long as the user who wants to use
+   different memory allocation functions first calls mp_set_memory_functions()
+   before any call to mpfr_init or mpfr_init2.
+   For more complex usages, change #if 1 into #if 0. Warning! But in this
+   case, the user must make sure that there are no data internal to MPFR
+   allocated with the previous allocator. Freeing all the caches may be
+   necessary, but this is not guaranteed to be sufficient. */
+
+#if 1
 #undef __gmp_allocate_func
 #undef __gmp_reallocate_func
 #undef __gmp_free_func
@@ -265,17 +292,28 @@ __MPFR_DECLSPEC extern const struct bases mpfr_bases[257];
 #define __gmp_allocate_func   (MPFR_GET_MEMFUNC, mpfr_allocate_func)
 #define __gmp_reallocate_func (MPFR_GET_MEMFUNC, mpfr_reallocate_func)
 #define __gmp_free_func       (MPFR_GET_MEMFUNC, mpfr_free_func)
-__MPFR_DECLSPEC extern MPFR_THREAD_ATTR void * (*mpfr_allocate_func)   _MPFR_PROTO ((size_t));
-__MPFR_DECLSPEC extern MPFR_THREAD_ATTR void * (*mpfr_reallocate_func) _MPFR_PROTO ((void *, size_t, size_t));
-__MPFR_DECLSPEC extern MPFR_THREAD_ATTR void   (*mpfr_free_func)       _MPFR_PROTO ((void *, size_t));
+#else
+extern void * (*__gmp_allocate_func) (size_t);
+extern void * (*__gmp_reallocate_func) (void *, size_t, size_t);
+extern void (*__gmp_free_func) (void *, size_t);
+#endif
+
+__MPFR_DECLSPEC extern MPFR_THREAD_ATTR void * (*mpfr_allocate_func)   (size_t);
+__MPFR_DECLSPEC extern MPFR_THREAD_ATTR void * (*mpfr_reallocate_func) (void *, size_t, size_t);
+__MPFR_DECLSPEC extern MPFR_THREAD_ATTR void   (*mpfr_free_func)       (void *, size_t);
 
 #if defined(WANT_GMP_INTERNALS) && defined(HAVE___GMPN_SBPI1_DIVAPPR_Q)
 #ifndef __gmpn_sbpi1_divappr_q
-  __MPFR_DECLSPEC mp_limb_t __gmpn_sbpi1_divappr_q _MPFR_PROTO ((mp_limb_t*,
-                mp_limb_t*, mp_size_t, mp_limb_t*, mp_size_t, mp_limb_t));
+__MPFR_DECLSPEC mp_limb_t __gmpn_sbpi1_divappr_q (mp_limb_t*,
+                mp_limb_t*, mp_size_t, mp_limb_t*, mp_size_t, mp_limb_t);
 #endif
 #endif
 
+#if defined(WANT_GMP_INTERNALS) && defined(HAVE___GMPN_INVERT_LIMB)
+#ifndef __gmpn_invert_limb
+__MPFR_DECLSPEC mp_limb_t __gmpn_invert_limb (mp_limb_t);
+#endif
+#endif
 
 /* Temp memory allocate */
 struct tmp_marker
@@ -285,9 +323,9 @@ struct tmp_marker
   struct tmp_marker *next;
 };
 
-__MPFR_DECLSPEC void *mpfr_tmp_allocate _MPFR_PROTO ((struct tmp_marker **,
-                                                      size_t));
-__MPFR_DECLSPEC void mpfr_tmp_free _MPFR_PROTO ((struct tmp_marker *));
+__MPFR_DECLSPEC void *mpfr_tmp_allocate (struct tmp_marker **,
+                                         size_t);
+__MPFR_DECLSPEC void mpfr_tmp_free (struct tmp_marker *);
 
 /* Can be overriden at configure time. Useful for checking buffer overflow. */
 #ifndef MPFR_ALLOCA_MAX
@@ -314,25 +352,30 @@ __MPFR_DECLSPEC void mpfr_tmp_free _MPFR_PROTO ((struct tmp_marker *));
  ****** interfaces.                               *****
  ******************************************************/
 
-/* If a mpn_sqr_n macro is not defined, use mpn_mul. GMP 4.x defines a
-   mpn_sqr_n macro in gmp-impl.h (and this macro disappeared in GMP 5),
-   so that GMP's macro can only be used when MPFR has been configured
-   with --with-gmp-build (and only with GMP 4.x). */
-#ifndef mpn_sqr_n
-# define mpn_sqr_n(dst,src,n) mpn_mul((dst),(src),(n),(src),(n))
+/* If mpn_sqr is not defined, use mpn_mul_n instead
+   (mpn_sqr was called mpn_sqr_n (internal) in older versions of GMP). */
+#ifndef mpn_sqr
+# define mpn_sqr(dst,src,n) mpn_mul_n((dst),(src),(src),(n))
 #endif
 
 /* invert_limb macro, copied from GMP 5.0.2, file gmp-impl.h.
    It returns invxl = floor((B^2-1)/xl)-B, where B=2^BITS_PER_LIMB,
    assuming the most significant bit of xl is set. */
 #ifndef invert_limb
+#if defined(WANT_GMP_INTERNALS) && defined(HAVE___GMPN_INVERT_LIMB)
+#define invert_limb(invxl,xl)                             \
+  do {                                                    \
+    invxl = __gmpn_invert_limb (xl);                      \
+  } while (0)
+#else
 #define invert_limb(invxl,xl)                             \
   do {                                                    \
     mp_limb_t dummy MPFR_MAYBE_UNUSED;                    \
     MPFR_ASSERTD ((xl) != 0);                             \
     udiv_qrnnd (invxl, dummy, ~(xl), MPFR_LIMB_MAX, xl);  \
   } while (0)
-#endif
+#endif /* defined(WANT_GMP_INTERNALS) && defined(HAVE___GMPN_INVERT_LIMB) */
+#endif /* ifndef invert_limb */
 
 /* udiv_qr_3by2 macro, adapted from GMP 5.0.2, file gmp-impl.h.
    Compute quotient the quotient and remainder for n / d. Requires d
@@ -405,15 +448,140 @@ typedef struct {mp_limb_t inv32;} mpfr_pi1_t;
   } while (0)
 #endif
 
-/* mpn_copyd is a new exported function in GMP 5.
-   It existed in GMP 4 in the internal header, but still may not be
-   defined if HAVE_NATIVE_mpn_copyd is not defined */
+/* mpn_copyi and mpn_copyd are new exported functions in GMP 5.
+   Defining them to memmove works in overlap cases. */
 #if !__MPFR_GMP(5,0,0)
+# undef  mpn_copyi
+# define mpn_copyi memmove
 # undef  mpn_copyd
-# define mpn_copyd MPN_COPY
+# define mpn_copyd memmove
 #endif
 
+/* The following macro is copied from GMP-6.1.1, file gmp-impl.h,
+   macro udiv_qrnnd_preinv.
+   It computes q and r such that nh*2^GMP_NUMB_BITS + nl = q*d + r,
+   with 0 <= r < d, assuming di = __gmpn_invert_limb (d). */
+#define __udiv_qrnnd_preinv(q, r, nh, nl, d, di)                        \
+  do {                                                                  \
+    mp_limb_t _qh, _ql, _r, _mask;                                      \
+    umul_ppmm (_qh, _ql, (nh), (di));                                   \
+    if (__builtin_constant_p (nl) && (nl) == 0)                         \
+      {                                                                 \
+        _qh += (nh) + 1;                                                \
+        _r = - _qh * (d);                                               \
+        _mask = -(mp_limb_t) (_r > _ql); /* both > and >= are OK */     \
+        _qh += _mask;                                                   \
+        _r += _mask & (d);                                              \
+      }                                                                 \
+    else                                                                \
+      {                                                                 \
+        add_ssaaaa (_qh, _ql, _qh, _ql, (nh) + 1, (nl));                \
+        _r = (nl) - _qh * (d);                                          \
+        _mask = -(mp_limb_t) (_r > _ql); /* both > and >= are OK */     \
+        _qh += _mask;                                                   \
+        _r += _mask & (d);                                              \
+        if (MPFR_UNLIKELY (_r >= (d)))                                  \
+          {                                                             \
+            _r -= (d);                                                  \
+            _qh++;                                                      \
+          }                                                             \
+      }                                                                 \
+    (r) = _r;                                                           \
+    (q) = _qh;                                                          \
+  } while (0)
 
+#if GMP_NUMB_BITS == 64
+/* specialized version for nl = 0, with di computed inside */
+#define __udiv_qrnd_preinv(q, r, nh, d)                                 \
+  do {                                                                  \
+    mp_limb_t _di;                                                      \
+                                                                        \
+    MPFR_ASSERTD ((d) != 0);                                            \
+    MPFR_ASSERTD ((nh) < (d));                                          \
+    MPFR_ASSERTD ((d) & MPFR_LIMB_HIGHBIT);                             \
+                                                                        \
+    __gmpfr_invert_limb (_di, d);                                       \
+    __udiv_qrnnd_preinv (q, r, nh, 0, d, _di);                          \
+  } while (0)
+#elif defined(WANT_GMP_INTERNALS) && defined(HAVE___GMPN_INVERT_LIMB)
+/* specialized version for nl = 0, with di computed inside */
+#define __udiv_qrnd_preinv(q, r, nh, d)                                 \
+  do {                                                                  \
+    mp_limb_t _di;                                                      \
+                                                                        \
+    MPFR_ASSERTD ((d) != 0);                                            \
+    MPFR_ASSERTD ((nh) < (d));                                          \
+    MPFR_ASSERTD ((d) & MPFR_LIMB_HIGHBIT);                             \
+                                                                        \
+    _di = __gmpn_invert_limb (d);                                       \
+    __udiv_qrnnd_preinv (q, r, nh, 0, d, _di);                          \
+  } while (0)
+#else
+/* Same as __udiv_qrnnd_c from longlong.h, but using a single UWType/UWtype
+   division instead of two, and with n0=0. The analysis below assumes a limb
+   has 64 bits for simplicity. */
+#define __udiv_qrnd_preinv(q, r, n1, d)                                 \
+  do {                                                                  \
+    UWtype __d1, __d0, __q1, __q0, __r1, __r0, __i;                     \
+                                                                        \
+    MPFR_ASSERTD ((d) != 0);                                            \
+    MPFR_ASSERTD ((n1) < (d));                                          \
+    MPFR_ASSERTD ((d) & MPFR_LIMB_HIGHBIT);                             \
+                                                                        \
+    __d1 = __ll_highpart (d);                                           \
+    /* 2^31 <= d1 < 2^32 */                                             \
+    __d0 = __ll_lowpart (d);                                            \
+    /* 0 <= d0 < 2^32 */                                                \
+    __i = ~(UWtype) 0 / __d1;                                           \
+    /* 2^32 < i < 2^33 with i < 2^64/d1 */                              \
+                                                                        \
+    __q1 = (((n1) / __ll_B) * __i) / __ll_B;                            \
+    /* Since n1 < d, high(n1) <= d1 = high(d), thus */                  \
+    /* q1 <= high(n1) * (2^64/d1) / 2^32 <= 2^32 */                     \
+    /* and also q1 <= n1/d1 thus r1 >= 0 below */                       \
+    __r1 = (n1) - __q1 * __d1;                                          \
+    while (__r1 >= __d1)                                                \
+      __q1 ++, __r1 -= __d1;                                            \
+    /* by construction, we have n1 = q1*d1+r1, and 0 <= r1 < d1 */      \
+    /* thus q1 <= n1/d1 < 2^32+2 */                                     \
+    /* q1*d0 <= (2^32+1)*(2^32-1) <= 2^64-1 thus it fits in a limb. */  \
+    __r0 = __r1 * __ll_B;                                               \
+    __r1 = __r0 - __q1 * __d0;                                          \
+    /* At most two corrections are needed like in __udiv_qrnnd_c. */    \
+    if (__r1 > __r0) /* borrow when subtracting q1*d0 */                \
+      {                                                                 \
+        __q1--, __r1 += (d);                                            \
+        if (__r1 > (d)) /* no carry when adding d */                    \
+          __q1--, __r1 += (d);                                          \
+      }                                                                 \
+    /* We can have r1 < m here, but in this case the true remainder */  \
+    /* is 2^64+r1, which is > m (same analysis as below for r0). */     \
+    /* Now we have n1*2^32 = q1*d + r1, with 0 <= r1 < d. */            \
+    MPFR_ASSERTD(__r1 < (d));                                           \
+                                                                        \
+    /* The same analysis as above applies, with n1 replaced by r1, */   \
+    /* q1 by q0, r1 by r0. */                                           \
+    __q0 = ((__r1 / __ll_B) * __i) / __ll_B;                            \
+    __r0 = __r1  - __q0 * __d1;                                         \
+    while (__r0 >= __d1)                                                \
+      __q0 ++, __r0 -= __d1;                                            \
+    __r1 = __r0 * __ll_B;                                               \
+    __r0 = __r1 - __q0 * __d0;                                          \
+    /* We know the quotient floor(r1*2^64/d) is q0, q0-1 or q0-2.*/     \
+    if (__r0 > __r1) /* borrow when subtracting q0*d0 */                \
+      {                                                                 \
+        /* The quotient is either q0-1 or q0-2. */                      \
+        __q0--, __r0 += (d);                                            \
+        if (__r0 > (d)) /* no carry when adding d */                    \
+          __q0--, __r0 += (d);                                          \
+      }                                                                 \
+    /* Now we have n1*2^64 = (q1*2^32+q0)*d + r0, with 0 <= r0 < d. */  \
+    MPFR_ASSERTD(__r0 < (d));                                           \
+                                                                        \
+    (q) = __q1 * __ll_B | __q0;                                         \
+    (r) = __r0;                                                         \
+  } while (0)
+#endif
 
 /******************************************************
  ************* GMP Basic Pointer Types ****************
@@ -428,7 +596,7 @@ typedef const mp_limb_t *mpfr_limb_srcptr;
 
 /* mpfr_ieee_double_extract structure (copied from GMP 6.1.0, gmp-impl.h, with
    ieee_double_extract changed into mpfr_ieee_double_extract, and
-   _GMP_IEEE_FLOATS changed into _MPFR_IEEE_FLOATS. */
+   _GMP_IEEE_FLOATS changed into _MPFR_IEEE_FLOATS). */
 
 /* Define mpfr_ieee_double_extract and _MPFR_IEEE_FLOATS.
 
@@ -442,33 +610,52 @@ typedef const mp_limb_t *mpfr_limb_srcptr;
    float endianness, this is true everywhere we know of and it'd be a fairly
    strange system that did anything else.  */
 
+/* Note for MPFR: building with "gcc -std=c89 -pedantic -pedantic-errors"
+   fails if the bit-field type is unsigned long:
+
+     error: type of bit-field '...' is a GCC extension [-Wpedantic]
+
+   Though with -std=c99 no errors are obtained, this is still an extension
+   in C99, which says:
+
+     A bit-field shall have a type that is a qualified or unqualified version
+     of _Bool, signed int, unsigned int, or some other implementation-defined
+     type.
+
+   So, unsigned int should be better. This will fail with implementations
+   having 16-bit int's, but such implementations are not required to
+   support bit-fields of size > 16 anyway; if ever an implementation with
+   16-bit int's is found, the appropriate minimal changes could still be
+   done in the future.
+*/
+
 #ifndef _MPFR_IEEE_FLOATS
 
-#if HAVE_DOUBLE_IEEE_LITTLE_ENDIAN
+#ifdef HAVE_DOUBLE_IEEE_LITTLE_ENDIAN
 #define _MPFR_IEEE_FLOATS 1
 union mpfr_ieee_double_extract
 {
   struct
     {
-      unsigned long manl:32;
-      unsigned long manh:20;
-      unsigned long exp:11;
-      unsigned long sig:1;
+      unsigned int manl:32;
+      unsigned int manh:20;
+      unsigned int exp:11;
+      unsigned int sig:1;
     } s;
   double d;
 };
 #endif
 
-#if HAVE_DOUBLE_IEEE_BIG_ENDIAN
+#ifdef HAVE_DOUBLE_IEEE_BIG_ENDIAN
 #define _MPFR_IEEE_FLOATS 1
 union mpfr_ieee_double_extract
 {
   struct
     {
-      unsigned long sig:1;
-      unsigned long exp:11;
-      unsigned long manh:20;
-      unsigned long manl:32;
+      unsigned int sig:1;
+      unsigned int exp:11;
+      unsigned int manh:20;
+      unsigned int manl:32;
     } s;
   double d;
 };

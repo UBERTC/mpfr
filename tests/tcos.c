@@ -1,6 +1,6 @@
 /* Test file for mpfr_cos.
 
-Copyright 2001-2016 Free Software Foundation, Inc.
+Copyright 2001-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -276,8 +276,8 @@ main (int argc, char *argv[])
   if (mpfr_cmp (y, x))
     {
       printf ("Error for prec=30, rnd=MPFR_RNDU\n");
-      printf ("expected "); mpfr_print_binary (x); puts ("");
-      printf ("     got "); mpfr_print_binary (y); puts ("");
+      printf ("expected "); mpfr_dump (x);
+      printf ("     got "); mpfr_dump (y);
       exit (1);
     }
 
@@ -289,8 +289,8 @@ main (int argc, char *argv[])
   if (mpfr_cmp (y, x))
     {
       printf ("Error for prec=59, rnd=MPFR_RNDU\n");
-      printf ("expected "); mpfr_print_binary (x); puts ("");
-      printf ("     got "); mpfr_print_binary (y); puts ("");
+      printf ("expected "); mpfr_dump (x);
+      printf ("     got "); mpfr_dump (y);
       exit (1);
     }
 
@@ -302,7 +302,7 @@ main (int argc, char *argv[])
   if (mpfr_cmp (y, x))
     {
       printf ("Error for x=1.1100e-2, rnd=MPFR_RNDD\n");
-      printf ("expected 1.1100e-1, got "); mpfr_print_binary (y); puts ("");
+      printf ("expected 1.1100e-1, got "); mpfr_dump (y);
       exit (1);
     }
 

@@ -1,6 +1,6 @@
 /* mpfr_get_str -- output a floating-point number to a string
 
-Copyright 1999-2016 Free Software Foundation, Inc.
+Copyright 1999-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -57,7 +57,8 @@ static const char num_to_text62[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
    n is the number of limbs of r.
    e represents the maximal error in the approximation to Y (see above),
-      (e < 0 iff the approximation is exact, i.e., r*2^f = Y).
+      (e < 0 means that the approximation is known to be exact, i.e.,
+      r*2^f = Y).
    b is the wanted base (2 <= b <= 62).
    m is the number of wanted digits in the significand.
    rnd is the rounding mode.
@@ -115,8 +116,8 @@ mpfr_get_str_aux (char *const str, mpfr_exp_t *const exp, mp_limb_t *const r,
      to determine the nearest integer, we thus need a precision of
      n * GMP_NUMB_BITS + f */
 
-  if (exact || mpfr_can_round_raw (r, n, (mp_size_t) 1,
-            n * GMP_NUMB_BITS - e, MPFR_RNDN, rnd, n * GMP_NUMB_BITS + f))
+  if (exact || mpfr_round_p (r, n, n * GMP_NUMB_BITS - e,
+                             n * GMP_NUMB_BITS + f + (rnd == MPFR_RNDN)))
     {
       /* compute the nearest integer to R */
 
@@ -127,9 +128,6 @@ mpfr_get_str_aux (char *const str, mpfr_exp_t *const exp, mp_limb_t *const r,
       ret = mpfr_round_raw (r + i0, r, n * GMP_NUMB_BITS, 0,
                             n * GMP_NUMB_BITS + f, rnd, &dir);
       MPFR_ASSERTD(dir != MPFR_ROUND_FAILED);
-
-      /* warning: mpfr_round_raw_generic returns MPFR_EVEN_INEX (2) or
-         -MPFR_EVEN_INEX (-2) in case of even rounding */
 
       if (ret) /* Y is a power of 2 */
         {
@@ -2219,10 +2217,10 @@ mpfr_ceil_mul (mpfr_exp_t e, int beta, int i)
   mpfr_srcptr p;
   mpfr_t t;
   mpfr_exp_t r;
-  mp_limb_t tmpmant[(sizeof (mpfr_exp_t) - 1 ) / sizeof (mp_limb_t) + 1];
+  mp_limb_t tmpmant[MPFR_EXP_LIMB_SIZE];
 
   p = &__gmpfr_l2b[beta-2][i];
-  MPFR_TMP_INIT1(tmpmant, t, sizeof (mpfr_exp_t) * CHAR_BIT);
+  MPFR_TMP_INIT1(tmpmant, t, sizeof (mpfr_exp_t) * CHAR_BIT - 1);
   mpfr_set_exp_t (t, e, MPFR_RNDU);
   mpfr_mul (t, t, p, MPFR_RNDU);
   r = mpfr_get_exp_t (t, MPFR_RNDU);
@@ -2556,7 +2554,11 @@ mpfr_get_str (char *s, mpfr_exp_t *e, int b, size_t m, mpfr_srcptr x,
             }
         }
       else
-        break;
+        {
+          if (ret != 0)
+            MPFR_SAVE_EXPO_UPDATE_FLAGS (expo, MPFR_FLAGS_INEXACT);
+          break;
+        }
     }
   MPFR_ZIV_FREE (loop);
 
@@ -2570,5 +2572,5 @@ mpfr_get_str (char *s, mpfr_exp_t *e, int b, size_t m, mpfr_srcptr x,
 
 void mpfr_free_str (char *str)
 {
-   (*__gmp_free_func) (str, strlen (str) + 1);
+  (*__gmp_free_func) (str, strlen (str) + 1);
 }

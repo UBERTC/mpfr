@@ -1,6 +1,6 @@
-/* mpfr_free_cache - Free the cache used by MPFR for internal consts.
+/* mpfr_free_cache... - Free cache/pool memory used by MPFR.
 
-Copyright 2004-2016 Free Software Foundation, Inc.
+Copyright 2004-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -22,12 +22,12 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 #include "mpfr-impl.h"
 
-/* Default value for the cache of mpz_t */
+/* Default number of entries for the mpz_t pool */
 #ifndef MPFR_MY_MPZ_INIT
 #  define MPFR_MY_MPZ_INIT 32
 #endif
 
-/* If the number of value to cache is not zero */
+/* If the number of entries of the mpz_t pool is not zero */
 #if MPFR_MY_MPZ_INIT
 
 /* Index in the stack table of mpz_t and stack table of mpz_t */
@@ -54,6 +54,25 @@ mpfr_mpz_init (mpz_t z)
 }
 
 MPFR_HOT_FUNCTION_ATTR void
+mpfr_mpz_init2 (mpz_t z, mp_bitcnt_t n)
+{
+  if (MPFR_LIKELY (n_alloc > 0))
+    {
+      /* Get a mpz_t from the MPFR stack of previously used mpz_t.
+         It reduces memory pressure, and it allows to reuse
+         a mpz_t which should be sufficiently big. */
+      MPFR_ASSERTD (n_alloc <= numberof (mpz_tab));
+      memcpy (z, &mpz_tab[--n_alloc], sizeof (mpz_t));
+      SIZ(z) = 0;
+    }
+  else
+    {
+      /* Call real GMP function */
+      (__gmpz_init2)(z, n);
+    }
+}
+
+MPFR_HOT_FUNCTION_ATTR void
 mpfr_mpz_clear (mpz_t z)
 {
   if (MPFR_LIKELY (n_alloc < numberof (mpz_tab)))
@@ -71,8 +90,26 @@ mpfr_mpz_clear (mpz_t z)
 
 #endif
 
-void
-mpfr_free_cache (void)
+/* Theses caches may be global to all threads or local to the current */
+static void
+mpfr_free_const_caches (void)
+{
+#ifndef MPFR_USE_LOGGING
+  mpfr_clear_cache (__gmpfr_cache_const_pi);
+  mpfr_clear_cache (__gmpfr_cache_const_log2);
+#else
+  mpfr_clear_cache (__gmpfr_normal_pi);
+  mpfr_clear_cache (__gmpfr_normal_log2);
+  mpfr_clear_cache (__gmpfr_logging_pi);
+  mpfr_clear_cache (__gmpfr_logging_log2);
+#endif
+  mpfr_clear_cache (__gmpfr_cache_const_euler);
+  mpfr_clear_cache (__gmpfr_cache_const_catalan);
+}
+
+/* Theses caches are always local to a thread */
+static void
+mpfr_free_local_cache (void)
 {
   /* Before mpz caching */
   mpfr_bernoulli_freecache();
@@ -86,16 +123,29 @@ mpfr_free_cache (void)
     n_alloc = 0;
   }
 #endif
+}
 
-#ifndef MPFR_USE_LOGGING
-  mpfr_clear_cache (__gmpfr_cache_const_pi);
-  mpfr_clear_cache (__gmpfr_cache_const_log2);
-#else
-  mpfr_clear_cache (__gmpfr_normal_pi);
-  mpfr_clear_cache (__gmpfr_normal_log2);
-  mpfr_clear_cache (__gmpfr_logging_pi);
-  mpfr_clear_cache (__gmpfr_logging_log2);
+void
+mpfr_free_cache (void)
+{
+  mpfr_free_local_cache();
+  mpfr_free_const_caches ();
+}
+
+void
+mpfr_free_cache2 (mpfr_free_cache_t way)
+{
+  if (way & MPFR_FREE_LOCAL_CACHE)
+    {
+      mpfr_free_local_cache();
+#if !defined (WANT_SHARED_CACHE)
+      mpfr_free_const_caches ();
 #endif
-  mpfr_clear_cache (__gmpfr_cache_const_euler);
-  mpfr_clear_cache (__gmpfr_cache_const_catalan);
+    }
+  if (way & MPFR_FREE_GLOBAL_CACHE)
+    {
+#if defined (WANT_SHARED_CACHE)
+      mpfr_free_const_caches ();
+#endif
+    }
 }

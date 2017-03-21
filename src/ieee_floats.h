@@ -1,6 +1,6 @@
 /* auxiliary data to generate special IEEE floats (NaN, +Inf, -Inf)
 
-Copyright 1999-2016 Free Software Foundation, Inc.
+Copyright 1999-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -54,13 +54,14 @@ union dbl_bytes {
    must be in the compiler used to build the user-end application because
    this is where the sNaN will be obtained). */
 
-#if HAVE_DOUBLE_IEEE_LITTLE_ENDIAN
+#ifdef HAVE_DOUBLE_IEEE_LITTLE_ENDIAN
 static const union dbl_bytes dbl_infp =
   { { 0, 0, 0, 0, 0, 0, 0xF0, 0x7F } };
 static const union dbl_bytes dbl_infm =
   { { 0, 0, 0, 0, 0, 0, 0xF0, 0xFF } };
 #endif
-#if HAVE_DOUBLE_IEEE_BIG_ENDIAN
+
+#ifdef HAVE_DOUBLE_IEEE_BIG_ENDIAN
 static const union dbl_bytes dbl_infp =
   { { 0x7F, 0xF0, 0, 0, 0, 0, 0, 0 } };
 static const union dbl_bytes dbl_infm =

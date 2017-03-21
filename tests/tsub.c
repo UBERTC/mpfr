@@ -1,6 +1,6 @@
 /* Test file for mpfr_sub.
 
-Copyright 2001-2016 Free Software Foundation, Inc.
+Copyright 2001-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -105,8 +105,8 @@ check_diverse (void)
   if (mpfr_cmp (z, y))
     {
       printf ("Error in mpfr_sub (5)\n");
-      printf ("expected "); mpfr_print_binary (y); puts ("");
-      printf ("got      "); mpfr_print_binary (z); puts ("");
+      printf ("expected "); mpfr_dump (y);
+      printf ("got      "); mpfr_dump (z);
       exit (1);
     }
 
@@ -118,8 +118,8 @@ check_diverse (void)
   if (mpfr_cmp (z, y))
     {
       printf ("Error in mpfr_sub (7)\n");
-      printf ("expected "); mpfr_print_binary (y); puts ("");
-      printf ("got      "); mpfr_print_binary (z); puts ("");
+      printf ("expected "); mpfr_dump (y);
+      printf ("got      "); mpfr_dump (z);
       exit (1);
     }
 
@@ -131,8 +131,8 @@ check_diverse (void)
   if (mpfr_cmp (z, y))
     {
       printf ("Error in mpfr_sub (6)\n");
-      printf ("expected "); mpfr_print_binary (y); puts ("");
-      printf ("got      "); mpfr_print_binary (z); puts ("");
+      printf ("expected "); mpfr_dump (y);
+      printf ("got      "); mpfr_dump (z);
       exit (1);
     }
 
@@ -165,8 +165,8 @@ check_diverse (void)
   if (mpfr_cmp (x, y))
     {
       printf ("Error in mpfr_sub (1 - 1E-33) with prec=33\n");
-      printf ("Expected "); mpfr_print_binary (y); puts ("");
-      printf ("got      "); mpfr_print_binary (x); puts ("");
+      printf ("Expected "); mpfr_dump (y);
+      printf ("got      "); mpfr_dump (x);
       exit (1);
     }
 
@@ -178,7 +178,7 @@ check_diverse (void)
   if (mpfr_cmp_ui (x, 1))
     {
       printf ("Error in mpfr_sub (1 - 1E-33) with prec=32\n");
-      printf ("Expected 1.0, got "); mpfr_print_binary (x); puts ("");
+      printf ("Expected 1.0, got "); mpfr_dump (x);
       exit (1);
     }
 
@@ -198,8 +198,8 @@ check_diverse (void)
   if (mpfr_cmp (z, x))
     {
       printf ("Error in mpfr_sub (2)\n");
-      printf ("Expected "); mpfr_print_binary (x); puts ("");
-      printf ("Got      "); mpfr_print_binary (z); puts ("");
+      printf ("Expected "); mpfr_dump (x);
+      printf ("Got      "); mpfr_dump (z);
       exit (1);
     }
   mpfr_set_str_binary (x, "1.1110111011110001110111011111111111101000011001011100101100101101");
@@ -257,8 +257,8 @@ check_diverse (void)
   test_sub (z, x, y, MPFR_RNDN);
   if (mpfr_cmp (z, x)) {
     printf ("mpfr_sub(z, x, y) failed for prec(x)=112, prec(y)=98\n");
-    printf ("expected "); mpfr_print_binary (x); puts ("");
-    printf ("got      "); mpfr_print_binary (z); puts ("");
+    printf ("expected "); mpfr_dump (x);
+    printf ("got      "); mpfr_dump (z);
     exit (1);
   }
 
@@ -335,8 +335,8 @@ bug_ddefour(void)
     if (mpfr_cmp(ex2, ex3))
       {
         printf ("Error in ddefour test.\n");
-        printf ("ex2="); mpfr_print_binary (ex2); puts ("");
-        printf ("ex3="); mpfr_print_binary (ex3); puts ("");
+        printf ("ex2="); mpfr_dump (ex2);
+        printf ("ex3="); mpfr_dump (ex3);
         exit (1);
       }
 
@@ -376,11 +376,11 @@ check_two_sum (mpfr_prec_t p)
     {
       printf ("Wrong inexact flag for prec=%u, rnd=%s\n", (unsigned)p,
                mpfr_print_rnd_mode (rnd));
-      printf ("x="); mpfr_print_binary(x); puts ("");
-      printf ("y="); mpfr_print_binary(y); puts ("");
-      printf ("u="); mpfr_print_binary(u); puts ("");
-      printf ("v="); mpfr_print_binary(v); puts ("");
-      printf ("w="); mpfr_print_binary(w); puts ("");
+      printf ("x="); mpfr_dump (x);
+      printf ("y="); mpfr_dump (y);
+      printf ("u="); mpfr_dump (u);
+      printf ("v="); mpfr_dump (v);
+      printf ("w="); mpfr_dump (w);
       printf ("inexact = %d\n", inexact);
       exit (1);
     }
@@ -460,10 +460,10 @@ check_inexact (void)
                       printf ("Wrong inexact flag for rnd=%s\n",
                               mpfr_print_rnd_mode(rnd));
                       printf ("expected %d, got %d\n", cmp, inexact);
-                      printf ("x="); mpfr_print_binary (x); puts ("");
-                      printf ("u="); mpfr_print_binary (u); puts ("");
-                      printf ("y=  "); mpfr_print_binary (y); puts ("");
-                      printf ("x-u="); mpfr_print_binary (z); puts ("");
+                      printf ("x="); mpfr_dump (x);
+                      printf ("u="); mpfr_dump (u);
+                      printf ("y=  "); mpfr_dump (y);
+                      printf ("x-u="); mpfr_dump (z);
                       exit (1);
                     }
                 }
@@ -581,19 +581,19 @@ check_rounding (void)
                   {
                     printf ("Wrong result in check_rounding\n");
                     printf ("p=%lu k=%ld l=%ld\n", (unsigned long) p, k, l);
-                    printf ("b="); mpfr_print_binary (b); puts ("");
-                    printf ("c="); mpfr_print_binary (c); puts ("");
+                    printf ("b="); mpfr_dump (b);
+                    printf ("c="); mpfr_dump (c);
                     printf ("Expected 2^%lu\n", (unsigned long) p);
-                    printf ("Got      "); mpfr_print_binary (a); puts ("");
+                    printf ("Got      "); mpfr_dump (a);
                     exit (1);
                   }
                 if (i >= 0)
                   {
                     printf ("Wrong ternary value in check_rounding\n");
                     printf ("p=%lu k=%ld l=%ld\n", (unsigned long) p, k, l);
-                    printf ("b="); mpfr_print_binary (b); puts ("");
-                    printf ("c="); mpfr_print_binary (c); puts ("");
-                    printf ("a="); mpfr_print_binary (a); puts ("");
+                    printf ("b="); mpfr_dump (b);
+                    printf ("c="); mpfr_dump (c);
+                    printf ("a="); mpfr_dump (a);
                     printf ("Expected < 0, got %d\n", i);
                     exit (1);
                   }
@@ -605,17 +605,17 @@ check_rounding (void)
                 if (mpfr_cmp (a, res) != 0)
                   {
                     printf ("Wrong result in check_rounding\n");
-                    printf ("b="); mpfr_print_binary (b); puts ("");
-                    printf ("c="); mpfr_print_binary (c); puts ("");
-                    printf ("Expected "); mpfr_print_binary (res); puts ("");
-                    printf ("Got      "); mpfr_print_binary (a); puts ("");
+                    printf ("b="); mpfr_dump (b);
+                    printf ("c="); mpfr_dump (c);
+                    printf ("Expected "); mpfr_dump (res);
+                    printf ("Got      "); mpfr_dump (a);
                     exit (1);
                   }
                 if (i <= 0)
                   {
                     printf ("Wrong ternary value in check_rounding\n");
-                    printf ("b="); mpfr_print_binary (b); puts ("");
-                    printf ("c="); mpfr_print_binary (c); puts ("");
+                    printf ("b="); mpfr_dump (b);
+                    printf ("c="); mpfr_dump (c);
                     printf ("Expected > 0, got %d\n", i);
                     exit (1);
                   }
@@ -627,6 +627,158 @@ check_rounding (void)
       mpfr_clear (b);
       mpfr_clear (c);
     }
+}
+
+/* Check a = b - c, where the significand of b has all 1's, c is small
+   compared to b, and PREC(a) = PREC(b) - 1. Thus b is a midpoint for
+   the precision of the result a. The test is done with the extended
+   exponent range and with some reduced exponent range. Two choices
+   are made for the exponent of b: the maximum exponent - 1 (similar
+   to some normal case) and the maximum exponent (overflow case or
+   near overflow case, depending on the rounding mode).
+   This test is useful to trigger a bug in r10382: Since c is small,
+   the computation in sub1.c was done by first rounding b in the
+   precision of a, then correcting the result if b was a breakpoint
+   for this precision (exactly representable number for the directed
+   rounding modes, or midpoint for the round-to-nearest mode). The
+   problem was that for a midpoint in the round-to-nearest mode, the
+   rounding of b gave a spurious overflow; not only the overflow flag
+   was incorrect, but the result could not be corrected, since due to
+   this overflow, the "even rounding" information was lost.
+   In the case of reduced exponent range, an additional test is done
+   for consistency checks: the subtraction is done in the extended
+   exponent range (no overflow), then the result is converted to the
+   initial exponent range with mpfr_check_range. */
+static void
+check_max_almosteven (void)
+{
+  mpfr_exp_t old_emin, old_emax;
+  mpfr_exp_t emin[2] = { MPFR_EMIN_MIN, -1000 };
+  mpfr_exp_t emax[2] = { MPFR_EMAX_MAX, 1000 };
+  int i;
+
+  old_emin = mpfr_get_emin ();
+  old_emax = mpfr_get_emax ();
+
+  for (i = 0; i < 2; i++)
+    {
+      mpfr_t a1, a2, b, c;
+      mpfr_prec_t p;
+      int neg, j, rnd;
+
+      set_emin (emin[i]);
+      set_emax (emax[i]);
+
+      p = MPFR_PREC_MIN + randlimb () % 70;
+      mpfr_init2 (a1, p);
+      mpfr_init2 (a2, p);
+      mpfr_init2 (b, p+1);
+      mpfr_init2 (c, MPFR_PREC_MIN);
+
+      mpfr_setmax (b, 0);
+      mpfr_set_ui (c, 1, MPFR_RNDN);
+
+      for (neg = 0; neg < 2; neg++)
+        {
+          for (j = 1; j >= 0; j--)
+            {
+              mpfr_set_exp (b, __gmpfr_emax - j);
+              RND_LOOP (rnd)
+                {
+                  mpfr_flags_t flags1, flags2;
+                  int inex1, inex2;
+
+                  /* Expected result. */
+                  flags1 = MPFR_FLAGS_INEXACT;
+                  if (rnd == MPFR_RNDN || MPFR_IS_LIKE_RNDZ (rnd, neg))
+                    {
+                      inex1 = neg ? 1 : -1;
+                      mpfr_setmax (a1, __gmpfr_emax - j);
+                    }
+                  else
+                    {
+                      inex1 = neg ? -1 : 1;
+                      if (j == 0)
+                        {
+                          flags1 |= MPFR_FLAGS_OVERFLOW;
+                          mpfr_set_inf (a1, 1);
+                        }
+                      else
+                        {
+                          mpfr_setmin (a1, __gmpfr_emax);
+                        }
+                    }
+                  MPFR_SET_SIGN (a1, neg ? -1 : 1);
+
+                  /* Computed result. */
+                  mpfr_clear_flags ();
+                  inex2 = mpfr_sub (a2, b, c, (mpfr_rnd_t) rnd);
+                  flags2 = __gmpfr_flags;
+
+                  if (! (flags1 == flags2 && SAME_SIGN (inex1, inex2) &&
+                         mpfr_equal_p (a1, a2)))
+                    {
+                      printf ("Error 1 in check_max_almosteven for %s,"
+                              " i = %d, j = %d, neg = %d\n",
+                              mpfr_print_rnd_mode ((mpfr_rnd_t) rnd),
+                              i, j, neg);
+                      printf ("     b = ");
+                      mpfr_dump (b);
+                      printf ("Expected ");
+                      mpfr_dump (a1);
+                      printf ("  with inex = %d, flags =", inex1);
+                      flags_out (flags1);
+                      printf ("Got      ");
+                      mpfr_dump (a2);
+                      printf ("  with inex = %d, flags =", inex2);
+                      flags_out (flags2);
+                      exit (1);
+                    }
+
+                  if (i == 0)
+                    break;
+
+                  /* Additional test for the reduced exponent range. */
+                  mpfr_clear_flags ();
+                  set_emin (MPFR_EMIN_MIN);
+                  set_emax (MPFR_EMAX_MAX);
+                  inex2 = mpfr_sub (a2, b, c, (mpfr_rnd_t) rnd);
+                  set_emin (emin[i]);
+                  set_emax (emax[i]);
+                  inex2 = mpfr_check_range (a2, inex2, (mpfr_rnd_t) rnd);
+                  flags2 = __gmpfr_flags;
+
+                  if (! (flags1 == flags2 && SAME_SIGN (inex1, inex2) &&
+                         mpfr_equal_p (a1, a2)))
+                    {
+                      printf ("Error 2 in check_max_almosteven for %s,"
+                              " i = %d, j = %d, neg = %d\n",
+                              mpfr_print_rnd_mode ((mpfr_rnd_t) rnd),
+                              i, j, neg);
+                      printf ("     b = ");
+                      mpfr_dump (b);
+                      printf ("Expected ");
+                      mpfr_dump (a1);
+                      printf ("  with inex = %d, flags =", inex1);
+                      flags_out (flags1);
+                      printf ("Got      ");
+                      mpfr_dump (a2);
+                      printf ("  with inex = %d, flags =", inex2);
+                      flags_out (flags2);
+                      exit (1);
+                    }
+                }
+            }  /* j */
+
+          mpfr_neg (b, b, MPFR_RNDN);
+          mpfr_neg (c, c, MPFR_RNDN);
+        }  /* neg */
+
+      mpfr_clears (a1, a2, b, c, (mpfr_ptr) 0);
+    }  /* i */
+
+  set_emin (old_emin);
+  set_emax (old_emax);
 }
 
 #define TEST_FUNCTION test_sub
@@ -646,6 +798,7 @@ main (void)
   check_rounding ();
   check_diverse ();
   check_inexact ();
+  check_max_almosteven ();
   bug_ddefour ();
   for (p=2; p<200; p++)
     for (i=0; i<50; i++)

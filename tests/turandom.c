@@ -1,6 +1,6 @@
 /* Test file for mpfr_urandom
 
-Copyright 1999-2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 1999-2004, 2006-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -63,14 +63,14 @@ test_urandom (long nbtests, mpfr_prec_t prec, mpfr_rnd_t rnd, long bit_index,
       if (MPFR_MANT(x)[0] & MPFR_LIMB_MASK(sh) && !MPFR_IS_ZERO (x))
         {
           printf ("Error: mpfr_urandom() returns invalid numbers:\n");
-          mpfr_print_binary (x); puts ("");
+          mpfr_dump (x);
           exit (1);
         }
       /* check that the value is in [0,1] */
       if (mpfr_cmp_ui (x, 0) < 0 || mpfr_cmp_ui (x, 1) > 0)
         {
           printf ("Error: mpfr_urandom() returns number outside [0, 1]:\n");
-          mpfr_print_binary (x); puts ("");
+          mpfr_dump (x);
           exit (1);
         }
 
@@ -104,10 +104,11 @@ test_urandom (long nbtests, mpfr_prec_t prec, mpfr_rnd_t rnd, long bit_index,
               && (k > 0 || mpfr_cmp_ui (x, 1 << k) != 0 || inex != +1)
               && (!MPFR_IS_ZERO (x) || inex != -1)))
         {
-          printf ("Error: mpfr_urandom() do not handle correctly a restricted"
-                  " exponent range.\nrounding mode: %s\nternary value: %d\n"
-                  "random value: ", mpfr_print_rnd_mode (rnd), inex);
-          mpfr_print_binary (x); puts ("");
+          printf ("Error: mpfr_urandom() does not handle correctly"
+                  " a restricted exponent range.\nemin = %d\n"
+                  "rounding mode: %s\nternary value: %d\nrandom value: ",
+                  k+1, mpfr_print_rnd_mode (rnd), inex);
+          mpfr_dump (x);
           exit (1);
         }
     }
@@ -190,6 +191,24 @@ bug20100914 (void)
   gmp_randclear (s);
 }
 
+/* non-regression test for bug reported by Trevor Spiteri
+   https://sympa.inria.fr/sympa/arc/mpfr/2017-01/msg00020.html */
+static void
+bug20170123 (void)
+{
+  mpfr_t x;
+  mpfr_exp_t emin;
+
+  emin = mpfr_get_emin ();
+  mpfr_set_emin (-7);
+  mpfr_init2 (x, 53);
+  gmp_randseed_ui (mpfr_rands, 398);
+  mpfr_urandom (x, mpfr_rands, MPFR_RNDN);
+  MPFR_ASSERTN(mpfr_cmp_ui_2exp (x, 1, -8) == 0);
+  mpfr_clear (x);
+  mpfr_set_emin (emin);
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -237,7 +256,7 @@ main (int argc, char *argv[])
 
       if (argc == 1)  /* check also small precision */
         {
-          test_urandom (nbtests, 2, (mpfr_rnd_t) rnd, -1, 0);
+          test_urandom (nbtests, MPFR_PREC_MIN, (mpfr_rnd_t) rnd, -1, 0);
         }
     }
 
@@ -246,6 +265,8 @@ main (int argc, char *argv[])
      implemented in mini-gmp, we omit it with mini-gmp */
   bug20100914 ();
 #endif
+
+  bug20170123 ();
 
   tests_end_mpfr ();
   return 0;

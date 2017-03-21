@@ -1,6 +1,6 @@
 /* Test file for mpfr_pow, mpfr_pow_ui and mpfr_pow_si.
 
-Copyright 2000-2016 Free Software Foundation, Inc.
+Copyright 2000-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -452,10 +452,10 @@ check_inexact (mpfr_prec_t p)
               {
                 printf ("results differ for u=%lu rnd=%s\n",
                         u, mpfr_print_rnd_mode ((mpfr_rnd_t) rnd));
-                printf ("x="); mpfr_print_binary (x); puts ("");
-                printf ("y="); mpfr_print_binary (y); puts ("");
-                printf ("t="); mpfr_print_binary (t); puts ("");
-                printf ("z="); mpfr_print_binary (z); puts ("");
+                printf ("x="); mpfr_dump (x);
+                printf ("y="); mpfr_dump (y);
+                printf ("t="); mpfr_dump (t);
+                printf ("z="); mpfr_dump (z);
                 exit (1);
               }
             if (((inexact == 0) && (cmp != 0)) ||
@@ -465,8 +465,8 @@ check_inexact (mpfr_prec_t p)
                         (unsigned int) p, (unsigned int) q,
                         mpfr_print_rnd_mode ((mpfr_rnd_t) rnd));
                 printf ("expected %d, got %d\n", cmp, inexact);
-                printf ("u=%lu x=", u); mpfr_print_binary (x); puts ("");
-                printf ("y="); mpfr_print_binary (y); puts ("");
+                printf ("u=%lu x=", u); mpfr_dump (x);
+                printf ("y="); mpfr_dump (y);
                 exit (1);
               }
           }
@@ -1406,13 +1406,7 @@ bug20071218 (void)
 {
   mpfr_t x, y, z, t;
   int tern;
-  mpfr_exp_t emin;
 
-  if (mpfr_get_emin_min () > -1073741823)
-    return;
-
-  emin = mpfr_get_emin ();
-  mpfr_set_emin (-1073741823);
   mpfr_inits2 (64, x, y, z, t, (mpfr_ptr) 0);
   mpfr_set_str (x, "0x.80000000000002P-1023", 0, MPFR_RNDN);
   mpfr_set_str (y, "100000.000000002", 16, MPFR_RNDN);
@@ -1448,7 +1442,6 @@ bug20071218 (void)
       exit (1);
     }
   mpfr_clears (x, y, z, t, (mpfr_ptr) 0);
-  mpfr_set_emin (emin);
 }
 
 /* With revision 5429, this gives:

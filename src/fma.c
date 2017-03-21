@@ -1,6 +1,6 @@
 /* mpfr_fma -- Floating multiply-add
 
-Copyright 2001-2002, 2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 2001-2002, 2004, 2006-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -20,6 +20,7 @@ along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
+#define MPFR_NEED_LONGLONG_H
 #include "mpfr-impl.h"
 
 /* The fused-multiply-add (fma) of x, y and z is defined by:
@@ -101,6 +102,7 @@ mpfr_fma (mpfr_ptr s, mpfr_srcptr x, mpfr_srcptr y, mpfr_srcptr z,
   int inexact;
   mpfr_t u;
   mp_size_t n;
+  mpfr_exp_t e;
   MPFR_SAVE_EXPO_DECL (expo);
   MPFR_GROUP_DECL(group);
 
@@ -117,39 +119,84 @@ mpfr_fma (mpfr_ptr s, mpfr_srcptr x, mpfr_srcptr y, mpfr_srcptr z,
                      MPFR_IS_SINGULAR(z) ))
     return mpfr_fma_singular (s, x, y, z, rnd_mode);
 
+  e = MPFR_GET_EXP (x) + MPFR_GET_EXP (y);
+
   /* First deal with special case where prec(x) = prec(y) and x*y does
      not overflow nor underflow. Do it only for small sizes since for large
      sizes x*y is faster using Mulders' algorithm (as a rule of thumb,
      we assume mpn_mul_n is faster up to 4*MPFR_MUL_THRESHOLD).
      Since |EXP(x)|, |EXP(y)| < 2^(k-2) on a k-bit computer,
      |EXP(x)+EXP(y)| < 2^(k-1), thus cannot overflow nor underflow. */
-  n = MPFR_LIMB_SIZE(x);
-  if (n <= 4 * MPFR_MUL_THRESHOLD && MPFR_PREC(x) == MPFR_PREC(y) &&
-      MPFR_EXP(x) + MPFR_EXP(y) <= __gmpfr_emax &&
-      MPFR_EXP(x) + MPFR_EXP(y) > __gmpfr_emin)
+  if (MPFR_PREC(x) == MPFR_PREC(y) && e <= __gmpfr_emax && e > __gmpfr_emin)
     {
-      mp_size_t un = n + n;
-      mpfr_limb_ptr up;
-      MPFR_TMP_DECL(marker);
-
-      MPFR_TMP_MARK(marker);
-      MPFR_TMP_INIT (up, u, un * GMP_NUMB_BITS, un);
-      up = MPFR_MANT(u);
-      /* multiply x*y exactly into u */
-      mpn_mul_n (up, MPFR_MANT(x), MPFR_MANT(y), n);
-      if ((up[un - 1] & MPFR_LIMB_HIGHBIT) == 0)
+      if (MPFR_PREC(x) < GMP_NUMB_BITS && MPFR_PREC(z) == MPFR_PREC(x))
         {
-          mpn_lshift (up, up, un, 1);
-          MPFR_EXP(u) = MPFR_EXP(x) + MPFR_EXP(y) - 1;
+          mp_limb_t umant[2], zmant[2];
+          mpfr_t zz;
+          int inex;
+
+          umul_ppmm (umant[1], umant[0], MPFR_MANT(x)[0], MPFR_MANT(y)[0]);
+          MPFR_PREC(u) = MPFR_PREC(zz) = 2 * MPFR_PREC(x);
+          MPFR_MANT(u) = umant;
+          MPFR_MANT(zz) = zmant;
+          MPFR_SIGN(u) = MPFR_MULT_SIGN( MPFR_SIGN(x) , MPFR_SIGN(y) );
+          MPFR_SIGN(zz) = MPFR_SIGN(z);
+          MPFR_EXP(zz) = MPFR_EXP(z);
+          if (MPFR_PREC(zz) <= GMP_NUMB_BITS) /* zz fits in one limb */
+            {
+              if ((umant[1] & MPFR_LIMB_HIGHBIT) == 0)
+                {
+                  umant[0] = umant[1] << 1;
+                  MPFR_EXP(u) = e - 1;
+                }
+              else
+                {
+                  umant[0] = umant[1];
+                  MPFR_EXP(u) = e;
+                }
+              zmant[0] = MPFR_MANT(z)[0];
+            }
+          else
+            {
+              zmant[1] = MPFR_MANT(z)[0];
+              zmant[0] = MPFR_LIMB_ZERO;
+              if ((umant[1] & MPFR_LIMB_HIGHBIT) == 0)
+                {
+                  umant[1] = (umant[1] << 1) | (umant[0] >> (GMP_NUMB_BITS - 1));
+                  umant[0] = umant[0] << 1;
+                  MPFR_EXP(u) = e - 1;
+                }
+              else
+                MPFR_EXP(u) = e;
+            }
+          inex = mpfr_add (u, u, zz, rnd_mode);
+          return mpfr_set_1_2 (s, u, rnd_mode, inex);
         }
-      else
-        MPFR_EXP(u) = MPFR_EXP(x) + MPFR_EXP(y);
-      MPFR_SIGN(u) = MPFR_MULT_SIGN( MPFR_SIGN(x) , MPFR_SIGN(y) );
-      /* The above code does not generate any exception.
-         The exceptions will come only from mpfr_add. */
-      inexact = mpfr_add (s, u, z, rnd_mode);
-      MPFR_TMP_FREE(marker);
-      return inexact;
+      else if ((n = MPFR_LIMB_SIZE(x)) <= 4 * MPFR_MUL_THRESHOLD)
+        {
+          mpfr_limb_ptr up;
+          mp_size_t un = n + n;
+          MPFR_TMP_DECL(marker);
+
+          MPFR_TMP_MARK(marker);
+          MPFR_TMP_INIT (up, u, un * GMP_NUMB_BITS, un);
+          up = MPFR_MANT(u);
+          /* multiply x*y exactly into u */
+          mpn_mul_n (up, MPFR_MANT(x), MPFR_MANT(y), n);
+          if (MPFR_LIMB_MSB (up[un - 1]) == 0)
+            {
+              mpn_lshift (up, up, un, 1);
+              MPFR_EXP(u) = e - 1;
+            }
+          else
+            MPFR_EXP(u) = e;
+          MPFR_SIGN(u) = MPFR_MULT_SIGN( MPFR_SIGN(x) , MPFR_SIGN(y) );
+          /* The above code does not generate any exception.
+             The exceptions will come only from mpfr_add. */
+          inexact = mpfr_add (s, u, z, rnd_mode);
+          MPFR_TMP_FREE(marker);
+          return inexact;
+        }
     }
 
   /* If we take prec(u) >= prec(x) + prec(y), the product u <- x*y
@@ -175,8 +222,7 @@ mpfr_fma (mpfr_ptr s, mpfr_srcptr x, mpfr_srcptr y, mpfr_srcptr z,
              Also, we know that |z| < 2^emax. If E(x) + E(y) >= emax+3,
              then |x*y| >= 2^(emax+1), and |x*y + z| >= 2^emax. This case
              is also an overflow. */
-          if (MPFR_SIGN (u) == MPFR_SIGN (z) ||
-              MPFR_GET_EXP (x) + MPFR_GET_EXP (y) >= __gmpfr_emax + 3)
+          if (MPFR_SIGN (u) == MPFR_SIGN (z) || e >= __gmpfr_emax + 3)
             {
               MPFR_GROUP_CLEAR (group);
               MPFR_SAVE_EXPO_FREE (expo);

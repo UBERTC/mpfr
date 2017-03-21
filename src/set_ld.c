@@ -1,7 +1,7 @@
 /* mpfr_set_ld -- convert a machine long double to
                   a multiple precision floating-point number
 
-Copyright 2002-2016 Free Software Foundation, Inc.
+Copyright 2002-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -21,7 +21,7 @@ along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
-#include <float.h>
+#include <float.h> /* needed so that MPFR_LDBL_MANT_DIG is correctly defined */
 
 #define MPFR_NEED_LONGLONG_H
 #include "mpfr-impl.h"
@@ -44,6 +44,12 @@ static const union {
 #else
 #define MPFR_LDBL_MAX   LDBL_MAX
 #endif
+
+/* To check for +inf, one can use the test x > MPFR_LDBL_MAX, as LDBL_MAX
+   is the maximum finite number representable in a long double, according
+   to DR 467; see
+     http://www.open-std.org/jtc1/sc22/wg14/www/docs/n2092.htm
+   If this fails on some platform, a test x - x != 0 might be used. */
 
 #if defined(HAVE_LDOUBLE_IS_DOUBLE)
 
@@ -165,10 +171,6 @@ mpfr_set_ld (mpfr_ptr r, long double d, mpfr_rnd_t rnd_mode)
   LONGDOUBLE_NAN_ACTION (d, goto nan);
 
   /* Check for INF */
-  /* Note: according to the ISO C standard, there may be finite numbers
-     larger than LDBL_MAX, among the values that are not floating-point
-     numbers. If the following fails on some platform, a test d - d != 0
-     could be used. */
   if (d > MPFR_LDBL_MAX)
     {
       mpfr_set_inf (r, 1);
@@ -227,10 +229,6 @@ mpfr_set_ld (mpfr_ptr r, long double d, mpfr_rnd_t rnd_mode)
   LONGDOUBLE_NAN_ACTION (d, goto nan);
 
   /* Check for INF */
-  /* Note: according to the ISO C standard, there may be finite numbers
-     larger than LDBL_MAX, among the values that are not floating-point
-     numbers. If the following fails on some platform, a test d - d != 0
-     could be used. */
   if (d > MPFR_LDBL_MAX)
     {
       mpfr_set_inf (r, 1);

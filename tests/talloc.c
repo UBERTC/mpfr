@@ -1,6 +1,6 @@
 /* talloc -- test file concerning memory allocation
 
-Copyright 2015-2016 Free Software Foundation, Inc.
+Copyright 2015-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -47,7 +47,11 @@ main (void)
      of memory allocation. In r9454, this crashes because the memory
      allocation function used by this macro (under the condition that
      the size is > MPFR_ALLOCA_MAX) isn't defined yet. This bug comes
-     from r8813. */
+     from r8813.
+     WARNING! Do not add MPFR calls before this test. Otherwise the
+     mentioned problem may no longer be actually tested, making this
+     test useless. For other allocation tests, it is better to use a
+     different test file. */
   mpfr_set_ui (x, 1, MPFR_RNDN);
   mpfr_set_ui (y, 2, MPFR_RNDN);
   mpfr_add (x, x, y, MPFR_RNDN);

@@ -1,6 +1,6 @@
 /* Test file for round away.
 
-Copyright 2000-2016 Free Software Foundation, Inc.
+Copyright 2000-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -22,8 +22,15 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 #include "mpfr-test.h"
 
-#define DISP(s, t) {printf(s); mpfr_out_str(stdout, 2, 0, t, MPFR_RNDN); }
-#define DISP2(s,t) {DISP(s,t); putchar('\n');}
+#define DISP(s,t)                                       \
+  do                                                    \
+    {                                                   \
+      printf (s);                                       \
+      mpfr_out_str (stdout, 2, 0, t, MPFR_RNDN);        \
+    }                                                   \
+  while (0)
+
+#define DISP2(s,t) do { DISP(s,t); putchar ('\n'); } while (0)
 
 #define SPECIAL_MAX 12
 
@@ -119,8 +126,8 @@ test3 (int (*testfunc)(mpfr_ptr, mpfr_srcptr, mpfr_srcptr, mpfr_rnd_t),
           printf ("Error with RNDA for %s with ", foo);
           DISP("x=",ref2); DISP2(", y=",ref3);
           printf ("inexa=%d inexd=%d\n", inexa, inexd);
-          printf ("expected "); mpfr_print_binary (ref1); puts ("");
-          printf ("got      "); mpfr_print_binary (res1); puts ("");
+          printf ("expected "); mpfr_dump (ref1);
+          printf ("got      "); mpfr_dump (res1);
           exit (1);
         }
     }
@@ -222,8 +229,8 @@ test2ui (int (*testfunc)(mpfr_ptr, mpfr_srcptr, unsigned long int, mpfr_rnd_t),
           printf ("Error with RNDA for %s for c=%u\n", foo, ref3);
           DISP2("a=",ref2);
           printf ("inexa=%d inexd=%d\n", inexa, inexd);
-          printf ("expected "); mpfr_print_binary (ref1); puts ("");
-          printf ("got      "); mpfr_print_binary (res1); puts ("");
+          printf ("expected "); mpfr_dump (ref1);
+          printf ("got      "); mpfr_dump (res1);
           exit (1);
         }
     }

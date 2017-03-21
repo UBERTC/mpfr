@@ -1,6 +1,6 @@
 /* Test file for mpfr_acos.
 
-Copyright 2001-2016 Free Software Foundation, Inc.
+Copyright 2001-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -49,7 +49,7 @@ special (void)
   if (mpfr_cmp (x, y))
     {
       printf ("Error in mpfr_acos (2)\n");
-      mpfr_print_binary (y); printf ("\n");
+      mpfr_dump (y);
       exit (1);
     }
 

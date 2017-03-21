@@ -1,6 +1,6 @@
 /* tsum -- test file for the list summation function
 
-Copyright 2004-2016 Free Software Foundation, Inc.
+Copyright 2004-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -518,18 +518,17 @@ check2 (void)
  * t[17] = 2^(17*9+1) * j for -4 <= j <= 4.
  * t[18] = 2^(-1) * k for -1 <= k <= 1.
  * t[19] = 2^(-17*8) * m for -3 <= m <= 3.
- * prec = 17*9+4
+ * prec = MPFR_PREC_MIN and 17*9+4
  */
 static void
 check3 (void)
 {
   mpfr_t sum1, sum2, s1, s2, s3, s4, t[20];
   mpfr_ptr p[20];
-  int i, s, j, k, m, r, inex1, inex2;
-  int prec = 17*9+4;
+  mpfr_flags_t flags1, flags2;
+  int i, s, j, k, m, q, r, inex1, inex2;
+  int prec[2] = { MPFR_PREC_MIN, 17*9+4 };
 
-  mpfr_init2 (sum1, prec);
-  mpfr_init2 (sum2, prec);
   mpfr_init2 (s1, 17*17);
   mpfr_init2 (s2, 17*17+4);
   mpfr_init2 (s3, 17*17+4);
@@ -564,39 +563,51 @@ check3 (void)
                   mpfr_set_si_2exp (t[19], m, -17*8, MPFR_RNDN);
                   inex1 = mpfr_add (s4, s3, t[19], MPFR_RNDN);
                   MPFR_ASSERTN (inex1 == 0);
-                  RND_LOOP (r)
+                  for (q = 0; q < 2; q++)
                     {
-                      inex1 = mpfr_set (sum1, s4, (mpfr_rnd_t) r);
-                      inex2 = mpfr_sum (sum2, p, 20, (mpfr_rnd_t) r);
-                      MPFR_ASSERTN (mpfr_check (sum1));
-                      MPFR_ASSERTN (mpfr_check (sum2));
-                      if (!(mpfr_equal_p (sum1, sum2) &&
-                            SAME_SIGN (inex1, inex2)))
+                      mpfr_inits2 (prec[q], sum1, sum2, (mpfr_ptr) 0);
+                      RND_LOOP (r)
                         {
-                          printf ("Error in check3 on %s, "
-                                  "s = %d, j = %d, k = %d, m = %d\n",
-                                  mpfr_print_rnd_mode ((mpfr_rnd_t) r),
-                                  s, j, k, m);
-                          printf ("Expected ");
-                          mpfr_dump (sum1);
-                          printf ("with inex = %d\n", inex1);
-                          printf ("Got      ");
-                          mpfr_dump (sum2);
-                          printf ("with inex = %d\n", inex2);
-                          exit (1);
+                          mpfr_clear_flags ();
+                          inex1 = mpfr_set (sum1, s4, (mpfr_rnd_t) r);
+                          flags1 = __gmpfr_flags;
+                          mpfr_clear_flags ();
+                          inex2 = mpfr_sum (sum2, p, 20, (mpfr_rnd_t) r);
+                          flags2 = __gmpfr_flags;
+                          MPFR_ASSERTN (mpfr_check (sum1));
+                          MPFR_ASSERTN (mpfr_check (sum2));
+                          if (!(mpfr_equal_p (sum1, sum2) &&
+                                SAME_SIGN (inex1, inex2) &&
+                                flags1 == flags2))
+                            {
+                              printf ("Error in check3 on %s, "
+                                      "s = %d, j = %d, k = %d, m = %d\n",
+                                      mpfr_print_rnd_mode ((mpfr_rnd_t) r),
+                                      s, j, k, m);
+                              printf ("Expected ");
+                              mpfr_dump (sum1);
+                              printf ("with inex = %d and flags =", inex1);
+                              flags_out (flags1);
+                              printf ("Got      ");
+                              mpfr_dump (sum2);
+                              printf ("with inex = %d and flags =", inex2);
+                              flags_out (flags2);
+                              exit (1);
+                            }
                         }
-                    }
-                }
-            }
-        }
+                      mpfr_clears (sum1, sum2, (mpfr_ptr) 0);
+                    }  /* q */
+                }  /* m */
+            }  /* k */
+        }  /* j */
       for (i = 0; i < 17; i++)
         mpfr_neg (t[i], t[i], MPFR_RNDN);
       mpfr_neg (s1, s1, MPFR_RNDN);
-    }
+    }  /* s */
 
   for (i = 0; i < 20; i++)
     mpfr_clear (t[i]);
-  mpfr_clears (sum1, sum2, s1, s2, s3, s4, (mpfr_ptr) 0);
+  mpfr_clears (s1, s2, s3, s4, (mpfr_ptr) 0);
 }
 
 /* Test of s * (q * 2^(n-1) - 2^k) + h + i * 2^(-2) + j * 2^(-2)
@@ -630,7 +641,7 @@ check4 (void)
   /* No GNU style for the many nested loops... */
   for (k = 1; k <= 64; k++) {
     mpfr_set_si_2exp (t[0], -1, k, MPFR_RNDN);
-    for (n = k + 2; n <= k + 65; n++) {
+    for (n = k + MPFR_PREC_MIN; n <= k + 65; n++) {
       prec = n - k;
       mpfr_set_prec (sum1, prec);
       mpfr_set_prec (sum2, prec);
@@ -829,31 +840,67 @@ check_extreme (void)
   mpfr_clears (u, v, w, x, y, (mpfr_ptr) 0);
 }
 
-/* Generic random tests with cancellations */
+/* Generic random tests with cancellations.
+ *
+ * In summary, we do 4000 tests of the following form:
+ * 1. We set the first MPFR_NCANCEL members of an array to random values,
+ *    with a random exponent taken in 4 ranges, depending on the value of
+ *    i % 4 (see code below).
+ * 2. For each of the next MPFR_NCANCEL iterations:
+ *    A. we randomly permute some terms of the array (to make sure that a
+ *       particular order doesn't have an influence on the result);
+ *    B. we compute the sum in a random rounding mode;
+ *    C. if this sum is zero, we end the current test (there is no longer
+ *       anything interesting to test);
+ *    D. we check that this sum is below some bound (chosen as infinite
+ *       for the first iteration of (2), i.e. this test will be useful
+ *       only for the next iterations, after cancellations);
+ *    E. we put the opposite of this sum in the array, the goal being to
+ *       introduce a chain of cancellations;
+ *    F. we compute the bound for the next iteration, derived from (E).
+ * 3. We do another iteration like (2), but with reusing a random element
+ *    of the array. This last test allows one to check the support of
+ *    reused arguments. Before this support (r10467), it triggers an
+ *    assertion failure with (almost?) all seeds, and if assertions are
+ *    not checked, tsum fails in most cases but not all.
+ */
 static void
 cancel (void)
 {
   mpfr_t x[2 * MPFR_NCANCEL], bound;
   mpfr_ptr px[2 * MPFR_NCANCEL];
-  int i, j, n;
+  int i, j, k, n;
 
   mpfr_init2 (bound, 2);
 
-  for (i = 0; i < 1000; i++)
+  /* With 4000 tests, tsum will fail in most cases without support of
+     reused arguments (before r10467). */
+  for (i = 0; i < 4000; i++)
     {
       mpfr_set_inf (bound, 1);
-      for (n = 0; n < numberof (x); n++)
+      for (n = 0; n <= numberof (x); n++)
         {
           mpfr_prec_t p;
           mpfr_rnd_t rnd;
 
-          px[n] = x[n];
-          p = MPFR_PREC_MIN + (randlimb () % 256);
-          mpfr_init2 (x[n], p);
+          if (n < numberof (x))
+            {
+              px[n] = x[n];
+              p = MPFR_PREC_MIN + (randlimb () % 256);
+              mpfr_init2 (x[n], p);
+              k = n;
+            }
+          else
+            {
+              /* Reuse of a random member of the array. */
+              k = randlimb () % n;
+            }
+
           if (n < MPFR_NCANCEL)
             {
               mpfr_exp_t e;
 
+              MPFR_ASSERTN (n < numberof (x));
               e = (i & 1) ? 0 : mpfr_get_emin ();
               tests_default_random (x[n], 256, e,
                                     ((i & 2) ? e + 2000 : mpfr_get_emax ()),
@@ -870,7 +917,9 @@ cancel (void)
                   k2 = randlimb () % (n-1);
                   mpfr_swap (x[k1], x[k2]);
                 }
+
               rnd = RND_RAND ();
+
 #if DEBUG
               printf ("mpfr_sum cancellation test\n");
               for (j = 0; j < n; j++)
@@ -882,22 +931,29 @@ cancel (void)
               printf ("  rnd = %s, output prec = %ld\n",
                       mpfr_print_rnd_mode (rnd), mpfr_get_prec (x[n]));
 #endif
-              mpfr_sum (x[n], px, n, rnd);
-              if (mpfr_zero_p (x[n]))
+
+              mpfr_sum (x[k], px, n, rnd);
+
+              if (mpfr_zero_p (x[k]))
                 {
-                  n++;
+                  if (k == n)
+                    n++;
                   break;
                 }
-              mpfr_neg (x[n], x[n], MPFR_RNDN);
-              if (mpfr_cmpabs (x[n], bound) > 0)
+
+              if (mpfr_cmpabs (x[k], bound) > 0)
                 {
                   printf ("Error in cancel on i = %d, n = %d\n", i, n);
                   printf ("Expected bound: ");
                   mpfr_dump (bound);
-                  printf ("x[n]: ");
-                  mpfr_dump (x[n]);
+                  printf ("x[%d]: ", k);
+                  mpfr_dump (x[k]);
                   exit (1);
                 }
+
+              if (k != n)
+                break;
+
               /* For the bound, use MPFR_RNDU due to possible underflow.
                  It would be nice to add some specific underflow checks,
                  though there are already ones in check_underflow(). */
@@ -907,6 +963,8 @@ cancel (void)
               /* The next sum will be <= bound in absolute value
                  (the equality can be obtained in all rounding modes
                  since the sum will be rounded). */
+
+              mpfr_neg (x[n], x[n], MPFR_RNDN);
             }
         }
 

@@ -1,7 +1,7 @@
 /* Test file for mpfr_add_si, mpfr_sub_si, mpfr_si_sub, mpfr_mul_si,
    mpfr_div_si, mpfr_si_div
 
-Copyright 2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 2004, 2006-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -27,14 +27,16 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
    tgeneric_ui.c should probably be replaced by tgeneric.c,
    with some changes, since tgeneric.c does more checks. */
 
-#define ERROR1(s, i, z, exp) \
-{\
-  printf("Error for "s" and i=%d\n", i);\
-  printf("Expected %s\n", exp);\
-  printf("Got      "); mpfr_out_str (stdout, 16, 0, z, MPFR_RNDN);\
-  putchar ('\n');\
-  exit(1);\
-}
+#define ERROR1(s,i,z,exp)                                               \
+  do                                                                    \
+    {                                                                   \
+      printf ("Error for " s " and i=%d\n", i);                         \
+      printf ("Expected %s\n", exp);                                    \
+      printf ("Got      "); mpfr_out_str (stdout, 16, 0, z, MPFR_RNDN); \
+      putchar ('\n');                                                   \
+      exit(1);                                                          \
+    }                                                                   \
+  while (0)
 
 const struct {
   const char * op1;

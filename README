@@ -1,4 +1,4 @@
-Copyright 2000-2016 Free Software Foundation, Inc.
+Copyright 2000-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -47,6 +47,7 @@ install-sh      - installation file
 ltmain.sh       - auxiliary installation file
 m4/             - directory containing additional configuration files
 missing         - auxiliary installation file
+mpfr.pc.in      - auxiliary pkg-config file
 src/            - directory containing the MPFR source
 test-driver     - auxiliary installation file
 tests/          - directory containing the testsuite (for "make check")

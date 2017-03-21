@@ -1,6 +1,6 @@
 /* Test file for mpfr_get_decimal64 and mpfr_set_decimal64.
 
-Copyright 2006-2016 Free Software Foundation, Inc.
+Copyright 2006-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -34,11 +34,11 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 /* #define DEBUG */
 
-#if _GMP_IEEE_FLOATS
+#if _MPFR_IEEE_FLOATS
 static void
 print_decimal64 (_Decimal64 d)
 {
-  union ieee_double_extract x;
+  union mpfr_ieee_double_extract x;
   union ieee_double_decimal64 y;
   unsigned int Gh, i;
 
@@ -57,13 +57,15 @@ print_decimal64 (_Decimal64 d)
   printf ("|\n");
 }
 #else
-/* portable version, assuming long double has at least 55 bits */
+/* Portable version, assuming long double has at least 55 bits.
+   Note: __STDC_WANT_IEC_60559_DFP_EXT__ or __STDC_WANT_DEC_FP__
+   might allow to use printf("%.15De\n", d) */
 static void
 print_decimal64 (_Decimal64 d)
 {
   printf ("%.15Le\n", (long double) d);
 }
-#endif /* _GMP_IEEE_FLOATS */
+#endif /* _MPFR_IEEE_FLOATS */
 
 #define ERR_MISC(V)                                         \
   do                                                        \

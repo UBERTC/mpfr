@@ -1,7 +1,7 @@
 /* mpfr_j0, mpfr_j1, mpfr_jn -- Bessel functions of 1st kind, integer order.
    http://www.opengroup.org/onlinepubs/009695399/functions/j0.html
 
-Copyright 2007-2016 Free Software Foundation, Inc.
+Copyright 2007-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -311,6 +311,11 @@ mpfr_jn (mpfr_ptr res, long n, mpfr_srcptr z, mpfr_rnd_t r)
           MPFR_ASSERTN (! exception);
           exception = 1;
         }
+      /* the expected number of lost bits is k0, if err is larger than k0
+         most probably there is a cancellation in the series, thus we add
+         err - k0 bits to prec */
+      if (err > k0)
+        prec = MPFR_ADD_PREC (prec, err - k0);
       MPFR_ZIV_NEXT (loop, prec);
     }
   MPFR_ZIV_FREE (loop);

@@ -1,11 +1,11 @@
-/* mpfr_set_decimal64 -- convert a IEEE 754r decimal64 float to
+/* mpfr_set_decimal64 -- convert an IEEE 754-2008 decimal64 float to
                          a multiple precision floating-point number
 
 See https://gcc.gnu.org/ml/gcc/2006-06/msg00691.html,
 https://gcc.gnu.org/onlinedocs/gcc/Decimal-Float.html,
 and TR 24732 <http://www.open-std.org/jtc1/sc22/wg14/www/projects#24732>.
 
-Copyright 2006-2016 Free Software Foundation, Inc.
+Copyright 2006-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.

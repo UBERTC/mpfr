@@ -22,7 +22,7 @@ AR=ar
 CC=gcc
 CXX=g++
 RANLIB=ranlib
-CFLAGS=-O2 -fomit-frame-pointer -Wall -g
+CFLAGS=-O2 -fomit-frame-pointer -Wall -g -static
 LDFLAGS=
 RM=rm -f
 CP=cp -f
@@ -37,6 +37,8 @@ MAPM=$(GMP)
 ARPREC=$(GMP)
 CRLIBM=$(GMP)
 LIDIA=/localdisk/lidia/
+
+GMP_INCLUDE=$(GMP)/include
 
 MPFR_INCLUDE=$(MPFR)/include
 MPFR_LIB=$(MPFR)/lib
@@ -60,7 +62,7 @@ INCLUDES=-I. -I$(MPFR_INCLUDE) -I$(MPFR) -I$(GMP)/include/ -I$(GMP)
 endif
 
 # search first for real install, then for build directory
-LIBS=`(test -f $(MPFR_LIB)/libmpfr.a && echo $(MPFR_LIB)/libmpfr.a)` `(test -f $(MPFR)/.libs/libmpfr.a && echo $(MPFR)/.libs/libmpfr.a)` `(test -f $(MPFR)/src/.libs/libmpfr.a && echo $(MPFR)/src/.libs/libmpfr.a)` `(test -f $(GMP)/lib/libgmp.a && echo $(GMP)/lib/libgmp.a)` `(test -f $(GMP)/.libs/libgmp.a && echo $(GMP)/.libs/libgmp.a)`
+LIBS=`(test -f $(MPFR_LIB)/libmpfr.a && echo $(MPFR_LIB)/libmpfr.a)` `(test -f $(MPFR)/.libs/libmpfr.a && echo $(MPFR)/.libs/libmpfr.a)` `(test -f $(MPFR)/src/.libs/libmpfr.a && echo $(MPFR)/src/.libs/libmpfr.a)` `(test -f $(GMP)/lib/libgmp.a && echo $(GMP)/lib/libgmp.a)` `(test -f $(GMP)/lib/$$(gcc -print-multiarch 2>/dev/null)/libgmp.a && echo $(GMP)/lib/$$(gcc -print-multiarch 2>/dev/null)/libgmp.a)` `(test -f $(GMP)/.libs/libgmp.a && echo $(GMP)/.libs/libgmp.a)`
 
 XLIBS=`test -f $(PARI)/lib/libpari.a && echo $(PARI)/lib/libpari.a` \
       `test -f $(NTL)/lib/libntl.a && echo $(NTL)/lib/libntl.a`     \

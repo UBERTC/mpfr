@@ -114,6 +114,13 @@ public:
   }
 };
 
+class mpfr_sqr_test {
+public:
+  int func(mpfr_ptr a, mpfr_srcptr b, mpfr_srcptr c, mp_rnd_t r) {
+    return mpfr_sqr (a,b,r);
+  }
+};
+
 class mpfr_fma_test {
 public:
   int func(mpfr_ptr a, mpfr_srcptr b, mpfr_srcptr c, mpfr_srcptr d, mp_rnd_t r) {
@@ -128,6 +135,7 @@ public:
   }
 };
 
+#if MPFR_VERSION_MAJOR >= 4
 class mpfr_fmma_test {
 public:
   int func(mpfr_ptr a, mpfr_srcptr b, mpfr_srcptr c, mpfr_srcptr d, mpfr_srcptr e, mp_rnd_t r) {
@@ -141,6 +149,7 @@ public:
     return mpfr_fmms (a,b,c,d,e,r);
   }
 };
+#endif
 
 class mpfr_div_test {
 public:
@@ -250,6 +259,12 @@ public:
     return mpfr_atanh (a,b,r);
   }
 };
+class mpfr_pow_test {
+public:
+  int func (mpfr_ptr a, mpfr_srcptr b, mpfr_srcptr c, mp_rnd_t r) {
+    return mpfr_pow (a,b,c,r);
+  }
+};
 class mpfr_get_ld_test {
   long double ld;
 public:
@@ -264,8 +279,11 @@ static mpfr_test<mpfr_sub_test> test2 ("mpfr_sub");
 static mpfr_test<mpfr_mul_test> test3 ("mpfr_mul");
 static mpfr_test3<mpfr_fma_test> test10 ("mpfr_fma");
 static mpfr_test3<mpfr_fms_test> test11 ("mpfr_fms");
+#if MPFR_VERSION_MAJOR >= 4
 static mpfr_test4<mpfr_fmma_test> test12 ("mpfr_fmma");
 static mpfr_test4<mpfr_fmms_test> test13 ("mpfr_fmms");
+#endif
+static mpfr_test<mpfr_sqr_test> test14 ("mpfr_sqr");
 static mpfr_test<mpfr_div_test> test4 ("mpfr_div");
 static mpfr_test<mpfr_set_test> test5 ("mpfr_set");
 
@@ -287,6 +305,7 @@ static mpfr_test<mpfr_tanh_test>  testCh ("mpfr_tanh");
 static mpfr_test<mpfr_acosh_test> testDh ("mpfr_acosh");
 static mpfr_test<mpfr_asinh_test> testEh ("mpfr_asinh");
 static mpfr_test<mpfr_atanh_test> testFh ("mpfr_atanh");
+static mpfr_test<mpfr_pow_test>   testGh ("mpfr_pow");
 
 static mpfr_test<mpfr_get_ld_test> testFj ("mpfr_get_ld");
 
@@ -305,17 +324,17 @@ bool mpfr_test<T>::test (const vector<string> &base, const option_test &opt) {
     table = new mpfr_t[size];
     for (i = 0 ; i < size ; i++) {
       mpfr_init2 (table[i], opt.prec);
-      mpfr_set_str (table[i], base[i].c_str(), 10, MPFR_RNDN);
+      mpfr_set_str (table[i], base[i].c_str(), 10, opt.rnd);
     }
     mpfr_inits2 (opt.prec, a, b, c, NULL);
   }
 
   /* Do Measure */
   for(i = 0 ; i < (size-1) ; i++) {
-    mpfr_set (b, table[i], MPFR_RNDN);
-    mpfr_set (c, table[i+1], MPFR_RNDN);
+    mpfr_set (b, table[i], opt.rnd);
+    mpfr_set (c, table[i+1], opt.rnd);
     TIMP_OVERHEAD ();
-    m = TIMP_MEASURE (f.func (a, b, c, MPFR_RNDN) ); 
+    m = TIMP_MEASURE (f.func (a, b, c, opt.rnd) ); 
     cont = tim->update (i, m) || cont;
   }
 
@@ -338,18 +357,18 @@ bool mpfr_test3<T>::test (const vector<string> &base, const option_test &opt) {
     table = new mpfr_t[size];
     for (i = 0 ; i < size ; i++) {
       mpfr_init2 (table[i], opt.prec);
-      mpfr_set_str (table[i], base[i].c_str(), 10, MPFR_RNDN);
+      mpfr_set_str (table[i], base[i].c_str(), 10, opt.rnd);
     }
     mpfr_inits2 (opt.prec, a, b, c, d, NULL);
   }
 
   /* Do Measure */
   for(i = 0 ; i < (size-2) ; i++) {
-    mpfr_set (b, table[i], MPFR_RNDN);
-    mpfr_set (c, table[i+1], MPFR_RNDN);
-    mpfr_set (d, table[i+2], MPFR_RNDN);
+    mpfr_set (b, table[i], opt.rnd);
+    mpfr_set (c, table[i+1], opt.rnd);
+    mpfr_set (d, table[i+2], opt.rnd);
     TIMP_OVERHEAD ();
-    m = TIMP_MEASURE (f.func (a, b, c, d, MPFR_RNDN) ); 
+    m = TIMP_MEASURE (f.func (a, b, c, d, opt.rnd) ); 
     //cout << "m = " << m << endl;
     cont = tim->update (i, m) || cont;
   }
@@ -373,19 +392,19 @@ bool mpfr_test4<T>::test (const vector<string> &base, const option_test &opt) {
     table = new mpfr_t[size];
     for (i = 0 ; i < size ; i++) {
       mpfr_init2 (table[i], opt.prec);
-      mpfr_set_str (table[i], base[i].c_str(), 10, MPFR_RNDN);
+      mpfr_set_str (table[i], base[i].c_str(), 10, opt.rnd);
     }
     mpfr_inits2 (opt.prec, a, b, c, d, e, NULL);
   }
 
   /* Do Measure */
   for(i = 0 ; i < (size-3) ; i++) {
-    mpfr_set (b, table[i], MPFR_RNDN);
-    mpfr_set (c, table[i+1], MPFR_RNDN);
-    mpfr_set (d, table[i+2], MPFR_RNDN);
-    mpfr_set (e, table[i+3], MPFR_RNDN);
+    mpfr_set (b, table[i], opt.rnd);
+    mpfr_set (c, table[i+1], opt.rnd);
+    mpfr_set (d, table[i+2], opt.rnd);
+    mpfr_set (e, table[i+3], opt.rnd);
     TIMP_OVERHEAD ();
-    m = TIMP_MEASURE (f.func (a, b, c, d, e, MPFR_RNDN) ); 
+    m = TIMP_MEASURE (f.func (a, b, c, d, e, opt.rnd) ); 
     //cout << "m = " << m << endl;
     cont = tim->update (i, m) || cont;
   }

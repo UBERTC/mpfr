@@ -1,6 +1,6 @@
 /* mpfr_tlgamma -- test file for lgamma function
 
-Copyright 2005-2016 Free Software Foundation, Inc.
+Copyright 2005-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -144,9 +144,9 @@ special (void)
     {
       printf ("mpfr_lgamma("CHECK_X1") is wrong:\n"
               "expected ");
-      mpfr_print_binary (x); putchar ('\n');
+      mpfr_dump (x);
       printf ("got      ");
-      mpfr_print_binary (y); putchar ('\n');
+      mpfr_dump (y);
       exit (1);
     }
 
@@ -160,9 +160,9 @@ special (void)
     {
       printf ("mpfr_lgamma("CHECK_X2") is wrong:\n"
               "expected ");
-      mpfr_print_binary (x); putchar ('\n');
+      mpfr_dump (x);
       printf ("got      ");
-      mpfr_print_binary (y); putchar ('\n');
+      mpfr_dump (y);
       exit (1);
     }
 
@@ -189,8 +189,8 @@ special (void)
   if (mpfr_equal_p (x, y) == 0 || sign != 1)
     {
       printf ("Error in mpfr_lgamma (120)\n");
-      printf ("Expected "); mpfr_print_binary (y); puts ("");
-      printf ("Got      "); mpfr_print_binary (x); puts ("");
+      printf ("Expected "); mpfr_dump (y);
+      printf ("Got      "); mpfr_dump (x);
       exit (1);
     }
 
@@ -385,10 +385,32 @@ mpfr_lgamma1 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t r)
   return mpfr_lgamma (y, &sign, x, r);
 }
 
+/* Since r10377, the following test causes a "too much memory" error
+   when MPFR is built with Debian's tcc 0.9.27~git20151227.933c223-1
+   on x86_64. The problem came from __gmpfr_ceil_log2, now fixed in
+   r10443 (according to the integer promotion rules, this appeared to
+   be a bug in tcc, not in MPFR; however relying on such an obscure
+   rule was not a good idea). */
+static void
+tcc_bug20160606 (void)
+{
+  mpfr_t x, y;
+  int sign;
+
+  mpfr_init2 (x, 53);
+  mpfr_init2 (y, 53);
+  mpfr_set_ui_2exp (x, 1, -1, MPFR_RNDN);
+  mpfr_lgamma (y, &sign, x, MPFR_RNDN);
+  mpfr_clear (x);
+  mpfr_clear (y);
+}
+
 int
 main (void)
 {
   tests_start_mpfr ();
+
+  tcc_bug20160606 ();
 
   special ();
   test_generic (MPFR_PREC_MIN, 100, 2);

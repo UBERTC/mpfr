@@ -1,6 +1,6 @@
 /* Test file for mpfr_log_ui.
 
-Copyright 2016 Free Software Foundation, Inc.
+Copyright 2016-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -21,6 +21,33 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-test.h"
+
+static void
+compare_with_log (unsigned long n, mpfr_prec_t p)
+{
+  mpfr_t x, y;
+  int inex1, inex2;
+  mpfr_flags_t flags1;
+
+  mpfr_init2 (x, sizeof (unsigned long) * CHAR_BIT);
+  mpfr_init2 (y, p);
+  inex1 = mpfr_set_ui (x, n, MPFR_RNDN);
+  MPFR_ASSERTN(inex1 == 0);
+  inex1 = mpfr_log (y, x, MPFR_RNDN);
+  flags1 = __gmpfr_flags;
+  mpfr_set_prec (x, p);
+  inex2 = mpfr_log_ui (x, n, MPFR_RNDN);
+  MPFR_ASSERTN(inex1 == inex2);
+  MPFR_ASSERTN(flags1 == __gmpfr_flags);
+  MPFR_ASSERTN(mpfr_equal_p (x, y));
+  mpfr_clears (x, y, (mpfr_ptr) 0);
+}
+
+#define TEST_FUNCTION mpfr_log_ui
+#define ONE_ARG
+#define ULONG_ARG1
+#define RAND_FUNCTION(x) mpfr_set_ui (x, randlimb (), MPFR_RNDN)
+#include "tgeneric.c"
 
 #define TEST_FUNCTION mpfr_log_ui
 
@@ -45,8 +72,8 @@ main (int argc, char *argv[])
 
   if (argc >= 3) /* tlog_ui n prec [rnd] */
     {
-      mpfr_set_prec (x, atoi (argv[2]));
-      TEST_FUNCTION (x, atoi (argv[1]),
+      mpfr_set_prec (x, strtoul (argv[2], NULL, 10));
+      TEST_FUNCTION (x, strtoul (argv[1], NULL, 10),
                     argc > 3 ? (mpfr_rnd_t) atoi (argv[3]) : MPFR_RNDN);
       mpfr_out_str (stdout, 10, 0, x, MPFR_RNDN);
       printf ("\n");
@@ -160,6 +187,12 @@ main (int argc, char *argv[])
               }
           }
     }
+
+
+  test_generic (MPFR_PREC_MIN, 1000, 1);
+
+  for (n = 1; n < ULONG_MAX / 3; n *= 3)
+    compare_with_log (n, 10);
 
  clear_and_exit:
   mpfr_clears (x, y, z, t, v, (mpfr_ptr) 0);

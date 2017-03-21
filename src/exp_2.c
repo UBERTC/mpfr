@@ -1,7 +1,7 @@
 /* mpfr_exp_2 -- exponential of a floating-point number
                  using algorithms in O(n^(1/2)*M(n)) and O(n^(1/3)*M(n))
 
-Copyright 1999-2016 Free Software Foundation, Inc.
+Copyright 1999-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -95,7 +95,10 @@ mpfr_exp_2 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
   expx = MPFR_GET_EXP (x);
   precy = MPFR_PREC(y);
 
-  /* Warning: we cannot use the 'double' type here, since on 64-bit machines
+  /* First perform argument reduction: if x' = x - n*log(2) we have
+     exp(x) = exp(x)*2^n. We should take n near from x/log(2) but it does not
+     need to be exact.
+     Warning: we cannot use the 'double' type here, since on 64-bit machines
      x may be as large as 2^62*log(2) without overflow, and then x/log(2)
      is about 2^62: not every integer of that size can be represented as a
      'double', thus the argument reduction would fail. */
@@ -105,14 +108,16 @@ mpfr_exp_2 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
   else
     {
       mp_limb_t r_limb[(sizeof (long) -1) / sizeof(mp_limb_t) + 1];
-      MPFR_TMP_INIT1(r_limb, r, sizeof (long) * CHAR_BIT);
+      /* Note: we use precision sizeof (long) * CHAR_BIT - 1 here since it is
+         more efficient that full limb precision. */
+      MPFR_TMP_INIT1(r_limb, r, sizeof (long) * CHAR_BIT - 1);
       mpfr_div (r, x, __gmpfr_const_log2_RNDD, MPFR_RNDN);
 #ifdef MPFR_LONG_WITHIN_LIMB
       /* The following code assume an unsigned long can fit in a mp_limb_t */
       {
         mp_limb_t a;
         mpfr_exp_t exp;
-        MPFR_STAT_STATIC_ASSERT ((mp_limb_t) -1 >= (unsigned long) -1);
+        MPFR_STAT_STATIC_ASSERT (MPFR_LIMB_MAX >= ULONG_MAX);
         /* Read the long directly (faster than using mpfr_get_si
            since it fits, it is not singular, it can't be zero
            and there is no conversion to do) */
@@ -149,12 +154,12 @@ mpfr_exp_2 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
   /* for the O(n^(1/2)*M(n)) method, the Taylor series computation of
      n/K terms costs about n/(2K) multiplications when computed in fixed
      point */
-  K = (precy < MPFR_EXP_2_THRESHOLD) ? __gmpfr_isqrt ((precy + 1) / 2) + 5
+  K = (precy < MPFR_EXP_2_THRESHOLD) ? __gmpfr_isqrt ((precy + 1) / 2) + 3
     : __gmpfr_cuberoot (4*precy);
   l = (precy - 1) / K + 1;
   err = K + MPFR_INT_CEIL_LOG2 (2 * l + 18);
   /* add K extra bits, i.e. failure probability <= 1/2^K = O(1/precy) */
-  q = precy + err + K + 8;
+  q = precy + err + K + 10;
   /* if |x| >> 1, take into account the cancelled bits */
   if (expx > 0)
     q += expx;
@@ -250,7 +255,6 @@ mpfr_exp_2 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
               break;
             }
         }
-
       MPFR_ZIV_NEXT (loop, q);
       MPFR_GROUP_REPREC_2(group, q+error_r, r, s);
     }

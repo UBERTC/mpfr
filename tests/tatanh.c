@@ -1,6 +1,6 @@
 /* Test file for mpfr_atanh.
 
-Copyright 2001-2016 Free Software Foundation, Inc.
+Copyright 2001-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -101,7 +101,7 @@ special (void)
   if (!mpfr_nan_p (y))
     {
       printf ("Error: mpfr_atanh(+Inf) <> NaN\n");
-      mpfr_print_binary (y); printf ("\n");
+      mpfr_dump (y);
       exit (1);
     }
 
@@ -159,7 +159,7 @@ special (void)
   if (mpfr_cmp (y, z))
     {
       printf ("Error: mpfr_atanh (3)\n");
-      mpfr_print_binary (y); printf ("\n");
+      mpfr_dump (y);
       exit (1);
     }
 

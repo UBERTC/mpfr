@@ -1,6 +1,6 @@
 /* Test file for mpfr_exp2.
 
-Copyright 2001-2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 2001-2004, 2006-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -290,7 +290,7 @@ main (int argc, char *argv[])
     {
       printf ("Error for x=emin-2, RNDN\n");
       printf ("Expected +0\n");
-      printf ("Got      "); mpfr_print_binary (y); puts ("");
+      printf ("Got      "); mpfr_dump (y);
       exit (1);
     }
   /* restore emin */

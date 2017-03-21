@@ -1,6 +1,6 @@
 /* mpfr_set_q -- set a floating-point number from a multiple-precision rational
 
-Copyright 2000-2002, 2004-2016 Free Software Foundation, Inc.
+Copyright 2000-2002, 2004-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -38,7 +38,7 @@ set_z (mpfr_ptr f, mpz_srcptr z, mp_size_t *zs)
   MPFR_ASSERTD (mpz_sgn (z) != 0);
 
   /* Remove useless ending 0 */
-  for (p = PTR (z), s = *zs = ABS (SIZ (z)) ; *p == 0; p++, s--)
+  for (p = PTR (z), s = *zs = ABSIZ (z) ; *p == 0; p++, s--)
     MPFR_ASSERTD (s >= 0);
 
   /* Get working precision */

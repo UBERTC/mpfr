@@ -1,4 +1,4 @@
-# Copyright 2000-2016 Free Software Foundation, Inc.
+# Copyright 2000-2017 Free Software Foundation, Inc.
 # This Makefile.am is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -20,11 +20,14 @@ ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS = doc src tests tune tools/bench
 
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = mpfr.pc
+
 nobase_dist_doc_DATA = AUTHORS BUGS COPYING COPYING.LESSER NEWS TODO \
   examples/ReadMe examples/divworst.c examples/rndo-add.c examples/sample.c \
   examples/version.c examples/can_round.c
 
-EXTRA_DIST = PATCHES VERSION \
+EXTRA_DIST = PATCHES VERSION doc/check-typography tools/ck-clz_tab \
   tools/ck-copyright-notice tools/ck-news tools/ck-version-info \
   tools/get_patches.sh \
   $(DATAFILES)
@@ -42,3 +45,5 @@ dist-hook:
 	cd $(srcdir) && tools/ck-version-info
 	cd $(srcdir) && tools/ck-copyright-notice
 	cd $(srcdir) && tools/ck-news
+	cd $(srcdir) && tools/ck-clz_tab
+	cd $(srcdir)/doc && ./check-typography

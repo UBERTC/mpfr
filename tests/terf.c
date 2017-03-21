@@ -1,6 +1,6 @@
 /* Test file for mpfr_erf and mpfr_erfc.
 
-Copyright 2001-2016 Free Software Foundation, Inc.
+Copyright 2001-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -233,7 +233,7 @@ special_erf (void)
   if (mpfr_cmp (x, y))
     {
       printf ("Error: erf for prec=32 (2)\n");
-      mpfr_print_binary (x); printf ("\n");
+      mpfr_dump (x);
       exit (1);
     }
 

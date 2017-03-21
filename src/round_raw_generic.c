@@ -1,6 +1,6 @@
 /* mpfr_round_raw_generic -- Generic rounding function
 
-Copyright 1999-2016 Free Software Foundation, Inc.
+Copyright 1999-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -51,8 +51,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
  *
  * MPFR_RNDNA is now supported, but needs to be tested [TODO] and is
  * still not part of the API. In particular, the MPFR_RNDNA value (-1)
- * may change in the future without notice, and this will be the case
- * when this rounding mode will be supported officially.
+ * may change in the future without notice.
  */
 
 int
@@ -91,7 +90,7 @@ mpfr_round_raw_generic(
 
   if (MPFR_UNLIKELY(xprec <= yprec))
     { /* No rounding is necessary. */
-      /* if yp=xp, maybe an overlap: MPN_COPY_DECR is OK when src <= dst */
+      /* if yp=xp, maybe an overlap: mpn_copyd is OK when src <= dst */
       if (MPFR_LIKELY(rw))
         nw++;
       MPFR_ASSERTD(nw >= 1);
@@ -99,7 +98,7 @@ mpfr_round_raw_generic(
       if (use_inexp)
         *inexp = 0;
 #if flag == 0
-      MPN_COPY_DECR(yp + (nw - xsize), xp, xsize);
+      mpn_copyd (yp + (nw - xsize), xp, xsize);
       MPN_ZERO(yp, nw - xsize);
 #endif
       return 0;
@@ -123,7 +122,7 @@ mpfr_round_raw_generic(
       MPFR_ASSERTD(k >= 0);
       sb = xp[k] & lomask;  /* First non-significant bits */
       /* Rounding to nearest? */
-      if (MPFR_LIKELY (rnd_mode == MPFR_RNDN || rnd_mode == MPFR_RNDNA))
+      if (rnd_mode == MPFR_RNDN || rnd_mode == MPFR_RNDNA)
         {
           /* Rounding to nearest */
           mp_limb_t rbmask = MPFR_LIMB_ONE << (GMP_NUMB_BITS - 1 - rw);
@@ -132,9 +131,7 @@ mpfr_round_raw_generic(
             goto rnd_RNDZ; /* yes, behave like rounding toward zero */
           /* Rounding to nearest with rounding bit = 1 */
           if (MPFR_UNLIKELY (rnd_mode == MPFR_RNDNA))
-            /* FIXME: *inexp is not set. First, add a testcase that
-               triggers the bug (at least with a sanitizer). */
-            goto rnd_RNDN_add_one_ulp; /* like rounding away from zero */
+            goto away_addone_ulp; /* like rounding away from zero */
           sb &= ~rbmask; /* first bits after the rounding bit */
           while (MPFR_UNLIKELY(sb == 0) && k > 0)
             sb = xp[--k];
@@ -149,13 +146,14 @@ mpfr_round_raw_generic(
                   /* ((neg!=0)^(sb!=0)) ? MPFR_EVEN_INEX : -MPFR_EVEN_INEX */
                   /* since neg = 0 or 1 and sb = 0 */
 #if flag == 0
-                  MPN_COPY_INCR(yp, xp + xsize - nw, nw);
+                  mpn_copyi (yp, xp + xsize - nw, nw);
                   yp[0] &= himask;
 #endif
                   return 0; /* sb != 0 && rnd_mode != MPFR_RNDZ */
                 }
               else
                 {
+                away_addone_ulp:
                   /* sb != 0 && rnd_mode == MPFR_RNDN */
                   if (use_inexp)
                     *inexp = MPFR_EVEN_INEX-2*MPFR_EVEN_INEX*neg;
@@ -193,7 +191,7 @@ mpfr_round_raw_generic(
             /* ((neg != 0) ^ (rnd_mode != MPFR_RNDZ)) ? 1 : -1 */
             *inexp = MPFR_UNLIKELY(sb == 0) ? 0 : (2*neg-1);
 #if flag == 0
-          MPN_COPY_INCR(yp, xp + xsize - nw, nw);
+          mpn_copyi (yp, xp + xsize - nw, nw);
           yp[0] &= himask;
 #endif
           return 0; /* sb != 0 && rnd_mode != MPFR_RNDZ */
@@ -210,7 +208,7 @@ mpfr_round_raw_generic(
                 /* ((neg != 0) ^ (rnd_mode != MPFR_RNDZ)) ? 1 : -1 */
                 *inexp = 0;
 #if flag == 0
-              MPN_COPY_INCR(yp, xp + xsize - nw, nw);
+              mpn_copyi (yp, xp + xsize - nw, nw);
               yp[0] &= himask;
 #endif
               return 0;
@@ -243,7 +241,7 @@ mpfr_round_raw_generic(
         }
       else
         himask = MPFR_LIMB_MAX;
-      MPN_COPY_INCR(yp, xp + xsize - nw, nw);
+      mpn_copyi (yp, xp + xsize - nw, nw);
       yp[0] &= himask;
 #endif
       return 0;

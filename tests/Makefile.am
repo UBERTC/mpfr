@@ -1,4 +1,4 @@
-# Copyright 2000-2016 Free Software Foundation, Inc.
+# Copyright 2000-2017 Free Software Foundation, Inc.
 # This Makefile.am is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -33,7 +33,7 @@ check_PROGRAMS = tversion tabort_prec_max tassert tabort_defalloc1	\
      tsprintf tsqr tsqrt tsqrt_ui tstckintc tstdint tstrtofr tsub	\
      tsub1sp tsub_d tsub_ui tsubnormal tsum tswap ttan ttanh ttrunc	\
      tui_div tui_pow tui_sub turandom tvalist ty0 ty1 tyn tzeta		\
-     tzeta_ui
+     tzeta_ui tbeta
 
 # Before Automake 1.13, we ran tversion at the beginning and at the end
 # of the tests, and output from tversion appeared at the same place as
@@ -50,7 +50,7 @@ check:
 AM_CPPFLAGS = -DSRCDIR='"$(srcdir)"'
 
 EXTRA_DIST = tgeneric.c tgeneric_ui.c mpf_compat.h inp_str.dat tmul.dat \
-	mpfrtest.dat
+	mpfrtest.dat mpfrtest2.dat
 
 LDADD = libfrtests.la $(MPFR_LIBM) $(MPFR_LIBQUADMATH) $(top_builddir)/src/libmpfr.la
 AM_CPPFLAGS += -I$(top_srcdir)/src -I$(top_builddir)/src

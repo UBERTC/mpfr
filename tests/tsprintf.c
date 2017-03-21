@@ -1,7 +1,7 @@
 /* tsprintf.c -- test file for mpfr_sprintf, mpfr_vsprintf, mpfr_snprintf,
    and mpfr_vsnprintf
 
-Copyright 2007-2016 Free Software Foundation, Inc.
+Copyright 2007-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -85,9 +85,14 @@ check_sprintf (const char *expected, const char *fmt, mpfr_srcptr x)
     }
   if (n0 != n1)
     {
+      char format[1024];
       printf ("Error in mpfr_snprintf (s, %d, \"%s\", x) return value\n",
               p, fmt);
       printf ("expected: %d\ngot:      %d\n", n0, n1);
+      strncpy (format, "x='", 1024);
+      strncpy (format + 3, fmt, 1021);
+      strncpy (format + 3 + strlen (fmt), "'\n", 1021 - strlen (fmt));
+      mpfr_printf (format, x);
       exit (1);
     }
   if ((p > 1 && strncmp (expected, buffer, p-1) != 0)
@@ -324,6 +329,8 @@ decimal (void)
   /* sign or space, decimal point, left justified */
   check_sprintf (" 1.8E+07   ", "%- #11.1RDE", x);
   check_sprintf (" 1.E+07    ", "%- #11.0RDE", x);
+  /* large requested precision */
+  check_sprintf ("18993474.61279296875", "%.2147483647Rg", x);
 
   /* negative numbers */
   mpfr_mul_si (x, x, -1, MPFR_RNDD);
@@ -1128,7 +1135,6 @@ bug20111102 (void)
  * for %Ra and %Rb is not done on the MPFR number itself (as it
  * would overflow). Note: it has been reported on comp.std.c that
  * some C libraries behave differently on %a, but this is a bug.
- * FIXME: this function assumes e = 3 mod 4.
  */
 static void
 check_emax_aux (mpfr_exp_t e)
@@ -1137,9 +1143,6 @@ check_emax_aux (mpfr_exp_t e)
   char *s1, s2[256];
   int i;
   mpfr_exp_t emax;
-
-  if ((e % 4) != 3)
-    return;
 
   MPFR_ASSERTN (e <= LONG_MAX);
   emax = mpfr_get_emax ();
@@ -1162,8 +1165,8 @@ check_emax_aux (mpfr_exp_t e)
         printf ("(>LONG_MAX)\n");
       else
         printf ("%ld\n", (long) e);
-      printf ("Expected %s\n", s2);
-      printf ("Got      %s\n", s1);
+      printf ("Expected '%s'\n", s2);
+      printf ("Got      '%s'\n", s1);
       exit (1);
     }
 
@@ -1199,7 +1202,6 @@ check_emax (void)
   check_emax_aux (MPFR_EMAX_MAX);
 }
 
-/* FIXME: this function assumes e = 1 mod 4 */
 static void
 check_emin_aux (mpfr_exp_t e)
 {
@@ -1208,9 +1210,6 @@ check_emin_aux (mpfr_exp_t e)
   int i;
   mpfr_exp_t emin;
   mpz_t ee;
-
-  if ((e % 4) != 1)
-    return;
 
   MPFR_ASSERTN (e >= LONG_MIN);
   emin = mpfr_get_emin ();
@@ -1266,6 +1265,71 @@ check_emin (void)
   check_emin_aux (MPFR_EMIN_MIN);
 }
 
+static void
+test20161214 (void)
+{
+  mpfr_t x;
+  char buf[32];
+  const char s[] = "0x0.fffffffffffff8p+1024";
+  int r;
+
+  mpfr_init2 (x, 64);
+  mpfr_set_str (x, s, 16, MPFR_RNDN);
+  r = mpfr_snprintf (buf, 32, "%.*RDf", -2, x);
+  MPFR_ASSERTN(r == 316);
+  r = mpfr_snprintf (buf, 32, "%.*RDf", INT_MIN + 1, x);
+  MPFR_ASSERTN(r == 316);
+  r = mpfr_snprintf (buf, 32, "%.*RDf", INT_MIN, x);
+  MPFR_ASSERTN(r == 316);
+  mpfr_clear (x);
+}
+
+/* http://gforge.inria.fr/tracker/index.php?func=detail&aid=21056 */
+static void
+bug21056 (void)
+{
+  mpfr_t x;
+  const char s[] = "0x0.fffffffffffff8p+1024";
+  int ndigits, r;
+
+  mpfr_init2 (x, 64);
+
+  mpfr_set_str (x, s, 16, MPFR_RNDN);
+
+  ndigits = 1000;
+  r = mpfr_snprintf (0, 0, "%.*RDf", ndigits, x);
+  /* the return value should be ndigits + 310 */
+  MPFR_ASSERTN(r == ndigits + 310);
+
+  ndigits = INT_MAX - 310;
+  r = mpfr_snprintf (0, 0, "%.*RDf", ndigits, x);
+  MPFR_ASSERTN(r == INT_MAX);
+
+  ndigits = INT_MAX - 10;
+  r = mpfr_snprintf (0, 0, "%.*RDa", ndigits, x);
+  MPFR_ASSERTN(r == INT_MAX);
+
+  ndigits = INT_MAX - 7;
+  r = mpfr_snprintf (0, 0, "%.*RDe", ndigits, x);
+  MPFR_ASSERTN(r == INT_MAX);
+
+  ndigits = 1000;
+  r = mpfr_snprintf (0, 0, "%.*RDg", ndigits, x);
+  /* since trailing zeros are removed with %g, we get less digits */
+  MPFR_ASSERTN(r == 309);
+
+  ndigits = INT_MAX;
+  r = mpfr_snprintf (0, 0, "%.*RDg", ndigits, x);
+  /* since trailing zeros are removed with %g, we get less digits */
+  MPFR_ASSERTN(r == 309);
+
+  ndigits = INT_MAX - 1;
+  r = mpfr_snprintf (0, 0, "%#.*RDg", ndigits, x);
+  MPFR_ASSERTN(r == ndigits + 1);
+
+  mpfr_clear (x);
+}
+
 int
 main (int argc, char **argv)
 {
@@ -1286,6 +1350,8 @@ main (int argc, char **argv)
   mixed ();
   check_emax ();
   check_emin ();
+  test20161214 ();
+  bug21056 ();
 
 #if defined(HAVE_LOCALE_H) && defined(HAVE_SETLOCALE)
 #if MPFR_LCONV_DPTS

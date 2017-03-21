@@ -1,6 +1,6 @@
 /* Test file for mpfr_version.
 
-Copyright 2004-2016 Free Software Foundation, Inc.
+Copyright 2004-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -26,6 +26,9 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 #include "mpfr-intmax.h"
 #include "mpfr-test.h"
+
+#define STRINGIZE(S) #S
+#define MAKE_STR(S) STRINGIZE(S)
 
 int
 main (void)
@@ -63,6 +66,81 @@ main (void)
   printf (COMP2 "%s\n", __VERSION__);
 #endif
 
+  /************** More information about the C implementation **************/
+
+  /* The following macros are currently used by src/mpfr-cvers.h and/or
+     src/mpfr-impl.h; they may have an influcence on how MPFR is compiled. */
+
+#if defined(__STDC__) || defined(__STDC_VERSION__)
+  printf ("[tversion] C standard: __STDC__ = "
+#if defined(__STDC__)
+          MAKE_STR(__STDC__)
+#else
+          "undef"
+#endif
+          ", __STDC_VERSION__ = "
+#if defined(__STDC_VERSION__)
+          MAKE_STR(__STDC_VERSION__)
+#else
+          "undef"
+#endif
+          "\n");
+#endif
+
+#if defined(__GNUC__)
+  printf ("[tversion] __GNUC__ = " MAKE_STR(__GNUC__) ", __GNUC_MINOR__ = "
+#if defined(__GNUC_MINOR__)
+          MAKE_STR(__GNUC_MINOR__)
+#else
+          "undef"
+#endif
+          "\n");
+#endif
+
+#if defined(__ICC) || defined(__INTEL_COMPILER)
+  printf ("[tversion] Intel compiler: __ICC = "
+#if defined(__ICC)
+          MAKE_STR(__ICC)
+#else
+          "undef"
+#endif
+          ", __INTEL_COMPILER = "
+#if defined(__INTEL_COMPILER)
+          MAKE_STR(__INTEL_COMPILER)
+#else
+          "undef"
+#endif
+          "\n");
+#endif
+
+#if defined(_WIN32) || defined(_MSC_VER)
+  printf ("[tversion] MS Windows: _WIN32 = "
+#if defined(_WIN32)
+          MAKE_STR(_WIN32)
+#else
+          "undef"
+#endif
+          ", _MSC_VER = "
+#if defined(_MSC_VER)
+          MAKE_STR(_MSC_VER)
+#else
+          "undef"
+#endif
+          "\n");
+#endif
+
+#if defined(__GLIBC__)
+  printf ("[tversion] __GLIBC__ = " MAKE_STR(__GLIBC__) ", __GLIBC_MINOR__ = "
+#if defined(__GLIBC_MINOR__)
+          MAKE_STR(__GLIBC_MINOR__)
+#else
+          "undef"
+#endif
+          "\n");
+#endif
+
+  /*************************************************************************/
+
 #ifdef __MPIR_VERSION
   printf ("[tversion] MPIR: header %d.%d.%d, library %s\n",
           __MPIR_VERSION, __MPIR_VERSION_MINOR, __MPIR_VERSION_PATCHLEVEL,
@@ -76,6 +154,28 @@ main (void)
           gmp_version);
 #endif
 #endif
+
+  /* The following output is also useful under Unix, where one should get:
+     WinDLL: __GMP_LIBGMP_DLL = 0, MPFR_WIN_THREAD_SAFE_DLL = undef
+     If this is not the case, something is probably broken. We cannot test
+     automatically as some MS Windows implementations may declare some Unix
+     (POSIX) compatibility; for instance, Cygwin32 defines __unix__ (but
+     Cygwin64 does not, probably because providing both MS Windows API and
+     POSIX API is not possible with a 64-bit ABI, since MS Windows is LLP64
+     and Unix is LP64). */
+  printf ("[tversion] WinDLL: __GMP_LIBGMP_DLL = "
+#if defined(__GMP_LIBGMP_DLL)
+          MAKE_STR(__GMP_LIBGMP_DLL)
+#else
+          "undef"
+#endif
+          ", MPFR_WIN_THREAD_SAFE_DLL = "
+#if defined(MPFR_WIN_THREAD_SAFE_DLL)
+          MAKE_STR(MPFR_WIN_THREAD_SAFE_DLL)
+#else
+          "undef"
+#endif
+          "\n");
 
   if (
 #ifdef MPFR_USE_THREAD_SAFE
@@ -178,6 +278,14 @@ main (void)
 #endif
           "\n");
 
+ printf ("[tversion] _mulx_u64 = "
+#if defined(HAVE_MULX_U64)
+         "yes"
+#else
+         "no"
+#endif
+         "\n");
+
   if (strcmp (mpfr_buildopt_tune_case (), MPFR_TUNE_CASE) != 0)
     {
       printf ("ERROR! mpfr_buildopt_tune_case() and MPFR_TUNE_CASE"
@@ -194,6 +302,13 @@ main (void)
   tests_start_mpfr ();
   if (locale != NULL)
     printf ("[tversion] Locale: %s\n", locale);
+  /* The memory limit should not be changed for "make check".
+     The warning below signals a possible user mistake.
+     Do not use "%zu" because it is not available in C90;
+     the type mpfr_ueexp_t should be sufficiently large. */
+  if (tests_memory_limit != DEFAULT_MEMORY_LIMIT)
+    printf ("[tversion] Warning! Memory limit changed to %" MPFR_EXP_FSPEC
+            "u\n", (mpfr_ueexp_t) tests_memory_limit);
   tests_end_mpfr ();
 
   return err;

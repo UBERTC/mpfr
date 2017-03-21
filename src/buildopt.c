@@ -1,7 +1,7 @@
 /* buildopt.c -- functions giving information about options used during the
    mpfr library compilation
 
-Copyright 2009-2016 Free Software Foundation, Inc.
+Copyright 2009-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -57,6 +57,16 @@ int
 mpfr_buildopt_gmpinternals_p (void)
 {
 #if defined(MPFR_HAVE_GMP_IMPL) || defined(WANT_GMP_INTERNALS)
+  return 1;
+#else
+  return 0;
+#endif
+}
+
+int
+mpfr_buildopt_sharedcache_p (void)
+{
+#if defined (WANT_SHARED_CACHE)
   return 1;
 #else
   return 0;

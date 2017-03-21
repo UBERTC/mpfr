@@ -1,6 +1,6 @@
 /* mpfr_fits_*_p -- test whether an mpfr fits a C signed type.
 
-Copyright 2003-2016 Free Software Foundation, Inc.
+Copyright 2003-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -37,7 +37,7 @@ FUNCTION (mpfr_srcptr f, mpfr_rnd_t rnd)
   int res;
 
   if (MPFR_UNLIKELY (MPFR_IS_SINGULAR (f)))
-    /* Zero always fit */
+    /* Zero always fits */
     return MPFR_IS_ZERO (f) ? 1 : 0;
 
   /* now it fits if either

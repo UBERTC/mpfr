@@ -1,6 +1,6 @@
 /* mpfr_rec_sqrt -- inverse square root
 
-Copyright 2008-2016 Free Software Foundation, Inc.
+Copyright 2008-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -26,11 +26,13 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #define LIMB_SIZE(x) ((((x)-1)>>MPFR_LOG2_GMP_NUMB_BITS) + 1)
 
 #define MPFR_COM_N(x,y,n)                               \
-  {                                                     \
-    mp_size_t i;                                        \
-    for (i = 0; i < n; i++)                             \
-      *((x)+i) = ~*((y)+i);                             \
-  }
+  do                                                    \
+    {                                                   \
+      mp_size_t i;                                      \
+      for (i = 0; i < n; i++)                           \
+        *((x)+i) = ~*((y)+i);                           \
+    }                                                   \
+  while (0)
 
 /* Put in X a p-bit approximation of 1/sqrt(A),
    where X = {x, n}/B^n, n = ceil(p/GMP_NUMB_BITS),

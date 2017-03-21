@@ -1,6 +1,6 @@
 /* Test file for mpfr_set_q.
 
-Copyright 2000-2016 Free Software Foundation, Inc.
+Copyright 2000-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -134,7 +134,7 @@ check_nan_inf_mpq (void)
       mpfr_print_binary (mpfr_cmp);
       printf (" got ");
       mpfr_print_binary (mpfr_value);
-      printf ("\n trinary value is %d\n", status);
+      printf ("\n ternary value is %d\n", status);
       exit (1);
     }
 
@@ -153,7 +153,7 @@ check_nan_inf_mpq (void)
       mpfr_print_binary (mpfr_cmp);
       printf (" got ");
       mpfr_print_binary (mpfr_value);
-      printf ("\n trinary value is %d\n", status);
+      printf ("\n ternary value is %d\n", status);
       exit (1);
     }
 

@@ -1,6 +1,6 @@
 /* Test file for mpfr_cmp2.
 
-Copyright 1999-2003, 2006-2016 Free Software Foundation, Inc.
+Copyright 1999-2003, 2006-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -212,8 +212,8 @@ special (void)
   if (mpfr_cmp2(x, y, &j) <= 0 || j != 32)
     {
       printf ("Error in mpfr_cmp2:\n");
-      printf ("x="); mpfr_print_binary(x); puts ("");
-      printf ("y="); mpfr_print_binary(y); puts ("");
+      printf ("x="); mpfr_dump (x);
+      printf ("y="); mpfr_dump (y);
       printf ("got %lu, expected 32\n", (unsigned long) j);
       exit (1);
     }
@@ -225,8 +225,8 @@ special (void)
   if (mpfr_cmp2(x, y, &j) <= 0 || j != 164)
     {
       printf ("Error in mpfr_cmp2:\n");
-      printf ("x="); mpfr_print_binary(x); puts ("");
-      printf ("y="); mpfr_print_binary(y); puts ("");
+      printf ("x="); mpfr_dump (x);
+      printf ("y="); mpfr_dump (y);
       printf ("got %lu, expected 164\n", (unsigned long) j);
       exit (1);
     }
@@ -239,8 +239,8 @@ special (void)
   if (mpfr_cmp2(x, y, &j) <= 0 || j != 127)
     {
       printf ("Error in mpfr_cmp2:\n");
-      printf ("x="); mpfr_print_binary(x); puts ("");
-      printf ("y="); mpfr_print_binary(y); puts ("");
+      printf ("x="); mpfr_dump (x);
+      printf ("y="); mpfr_dump (y);
       printf ("got %lu, expected 127\n", (unsigned long) j);
       exit (1);
     }
@@ -253,8 +253,8 @@ special (void)
   if (mpfr_cmp2(x, y, &j) <= 0 || j != 63)
     {
       printf ("Error in mpfr_cmp2:\n");
-      printf ("x="); mpfr_print_binary(x); puts ("");
-      printf ("y="); mpfr_print_binary(y); puts ("");
+      printf ("x="); mpfr_dump (x);
+      printf ("y="); mpfr_dump (y);
       printf ("got %lu, expected 63\n", (unsigned long) j);
       exit (1);
     }
@@ -267,8 +267,8 @@ special (void)
   if (mpfr_cmp2(x, y, &j) <= 0 || j != 63)
     {
       printf ("Error in mpfr_cmp2:\n");
-      printf ("x="); mpfr_print_binary(x); puts ("");
-      printf ("y="); mpfr_print_binary(y); puts ("");
+      printf ("x="); mpfr_dump (x);
+      printf ("y="); mpfr_dump (y);
       printf ("got %lu, expected 63\n", (unsigned long) j);
       exit (1);
     }

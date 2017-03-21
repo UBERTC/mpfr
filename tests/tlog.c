@@ -1,6 +1,6 @@
 /* Test file for mpfr_log.
 
-Copyright 1999, 2001-2016 Free Software Foundation, Inc.
+Copyright 1999, 2001-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -61,23 +61,22 @@ check2 (const char *as, mpfr_rnd_t rnd_mode, const char *res1s)
       printf ("correct result is        %s\n mpfr_log gives          ",
               res1s);
       mpfr_out_str(stdout, 10, 0, tres, MPFR_RNDN);
+      printf ("\n");
       exit (1);
     }
   mpfr_clears (ta, tres, (mpfr_ptr) 0);
 }
 
 static void
-check3 (double d, unsigned long prec, mpfr_rnd_t rnd)
+check3 (char *s, unsigned long prec, mpfr_rnd_t rnd)
 {
   mpfr_t x, y;
 
   mpfr_init2 (x, prec);
   mpfr_init2 (y, prec);
-  mpfr_set_d (x, d, rnd);
+  mpfr_set_str (x, s, 10, rnd);
   test_log (y, x, rnd);
   mpfr_out_str (stdout, 10, 0, y, rnd);
-  puts ("");
-  mpfr_print_binary (y);
   puts ("");
   mpfr_clear (x);
   mpfr_clear (y);
@@ -274,9 +273,10 @@ main (int argc, char *argv[])
 {
   tests_start_mpfr ();
 
-  if (argc==4)
+  if (argc == 3 || argc == 4)
     {   /* tlog x prec rnd */
-      check3 (atof(argv[1]), atoi(argv[2]), (mpfr_rnd_t) atoi(argv[3]));
+      check3 (argv[1], strtoul (argv[2], NULL, 10),
+              (argc == 4) ? (mpfr_rnd_t) atoi (argv[3]) : MPFR_RNDN);
       goto done;
     }
 

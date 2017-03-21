@@ -1,6 +1,6 @@
 /* Mulders' short product, square and division.
 
-Copyright 2005-2016 Free Software Foundation, Inc.
+Copyright 2005-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -41,7 +41,7 @@ http://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 static short mulhigh_ktab[MPFR_MULHIGH_TAB_SIZE];
 #else
 static short mulhigh_ktab[] = {MPFR_MULHIGH_TAB};
-#define MPFR_MULHIGH_TAB_SIZE ((mp_size_t) numberof (mulhigh_ktab))
+#define MPFR_MULHIGH_TAB_SIZE (numberof_const (mulhigh_ktab))
 #endif
 
 /* Put in  rp[n..2n-1] an approximation of the n high limbs
@@ -151,7 +151,7 @@ mpfr_mullow_n (mpfr_limb_ptr rp, mpfr_limb_srcptr np, mpfr_limb_srcptr mp,
 static short sqrhigh_ktab[MPFR_SQRHIGH_TAB_SIZE];
 #else
 static short sqrhigh_ktab[] = {MPFR_SQRHIGH_TAB};
-#define MPFR_SQRHIGH_TAB_SIZE (numberof (sqrhigh_ktab))
+#define MPFR_SQRHIGH_TAB_SIZE (numberof_const (sqrhigh_ktab))
 #endif
 
 /* Put in  rp[n..2n-1] an approximation of the n high limbs
@@ -169,7 +169,7 @@ mpfr_sqrhigh_n (mpfr_limb_ptr rp, mpfr_limb_srcptr np, mp_size_t n)
     /* we can't use mpn_sqr_basecase here, since it requires
        n <= SQR_KARATSUBA_THRESHOLD, where SQR_KARATSUBA_THRESHOLD
        is not exported by GMP */
-    mpn_sqr_n (rp, np, n);
+    mpn_sqr (rp, np, n);
   else if (k == 0)
     mpfr_mulhigh_n_basecase (rp, np, np, n);
   else
@@ -177,7 +177,7 @@ mpfr_sqrhigh_n (mpfr_limb_ptr rp, mpfr_limb_srcptr np, mp_size_t n)
       mp_size_t l = n - k;
       mp_limb_t cy;
 
-      mpn_sqr_n (rp + 2 * l, np + l, k);          /* fills rp[2l..2n-1] */
+      mpn_sqr (rp + 2 * l, np + l, k);            /* fills rp[2l..2n-1] */
       mpfr_mulhigh_n (rp, np, np + k, l);         /* fills rp[l-1..2l-1] */
       /* {rp+n-1,l+1} += 2 * {rp+l-1,l+1} */
       cy = mpn_lshift (rp + l - 1, rp + l - 1, l + 1, 1);
@@ -192,7 +192,7 @@ mpfr_sqrhigh_n (mpfr_limb_ptr rp, mpfr_limb_srcptr np, mp_size_t n)
 static short divhigh_ktab[MPFR_DIVHIGH_TAB_SIZE];
 #else
 static short divhigh_ktab[] = {MPFR_DIVHIGH_TAB};
-#define MPFR_DIVHIGH_TAB_SIZE (numberof (divhigh_ktab))
+#define MPFR_DIVHIGH_TAB_SIZE (numberof_const (divhigh_ktab))
 #endif
 
 #if !(defined(WANT_GMP_INTERNALS) && defined(HAVE___GMPN_SBPI1_DIVAPPR_Q))

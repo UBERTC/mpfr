@@ -1,6 +1,6 @@
 /* Test file for mpfr_get_d
 
-Copyright 1999-2016 Free Software Foundation, Inc.
+Copyright 1999-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -89,7 +89,7 @@ static void
 check_inf_nan (void)
 {
   /* only if nans and infs are available */
-#if _GMP_IEEE_FLOATS && !defined(MPFR_ERRDIVZERO)
+#if !defined(MPFR_ERRDIVZERO)
   mpfr_t  x;
   double  d;
 
@@ -139,7 +139,7 @@ check_max (void)
   MPFR_ASSERTN(d == -DBL_MAX);
   d = mpfr_get_d (u, MPFR_RNDU);
   MPFR_ASSERTN(d == -DBL_MAX);
-#if _GMP_IEEE_FLOATS && !defined(MPFR_ERRDIVZERO)
+#if !defined(MPFR_ERRDIVZERO)
   d = mpfr_get_d (u, MPFR_RNDN);
   MPFR_ASSERTN(DOUBLE_ISINF(d) && d < 0.0);
   d = mpfr_get_d (u, MPFR_RNDD);
@@ -151,7 +151,7 @@ check_max (void)
   MPFR_ASSERTN(d == DBL_MAX);
   d = mpfr_get_d (u, MPFR_RNDD);
   MPFR_ASSERTN(d == DBL_MAX);
-#if _GMP_IEEE_FLOATS && !defined(MPFR_ERRDIVZERO)
+#if !defined(MPFR_ERRDIVZERO)
   d = mpfr_get_d (u, MPFR_RNDN);
   MPFR_ASSERTN(DOUBLE_ISINF(d) && d > 0.0);
   d = mpfr_get_d (u, MPFR_RNDU);

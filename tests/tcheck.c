@@ -1,6 +1,6 @@
 /* Test file for mpfr_check.
 
-Copyright 2003-2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 2003-2004, 2006-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -107,7 +107,7 @@ main (void)
       tmp = MPFR_MANT(a)[0];
       if ((pr % GMP_NUMB_BITS) != 0)
         {
-          MPFR_MANT(a)[0] = ~0;
+          MPFR_MANT(a)[0] = MPFR_LIMB_MAX;
           if (mpfr_check(a))  ERROR("last bits non 0");
         }
       MPFR_MANT(a)[0] = tmp;

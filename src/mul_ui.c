@@ -1,6 +1,6 @@
 /* mpfr_mul_ui -- multiply a floating-point number by a machine integer
 
-Copyright 1999-2016 Free Software Foundation, Inc.
+Copyright 1999-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -61,7 +61,7 @@ mpfr_mul_ui (mpfr_ptr y, mpfr_srcptr x, unsigned long int u, mpfr_rnd_t rnd_mode
           MPFR_RET (0); /* zero is exact */
         }
     }
-  else if (MPFR_UNLIKELY (u <= 1))
+  else if (u <= 1)
     {
       if (u < 1)
         {

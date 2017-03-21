@@ -3,7 +3,7 @@
    using STATE as the random state previously initialized by a call to
    gmp_randinit_lc_2exp_size().
 
-Copyright 2000-2004, 2006-2016 Free Software Foundation, Inc.
+Copyright 2000-2004, 2006-2017 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -86,7 +86,7 @@ mpfr_urandomb (mpfr_ptr rop, gmp_randstate_t rstate)
       count_leading_zeros (cnt, rp[nlimbs - 1]);
       /* Normalization */
       exp -= cnt;
-      if (MPFR_UNLIKELY (exp < __gmpfr_emin || exp > __gmpfr_emax))
+      if (MPFR_UNLIKELY (! MPFR_EXP_IN_RANGE (exp)))
         {
           /* If the exponent is not in the current exponent range, we
              choose to return a NaN as this is probably a user error.
